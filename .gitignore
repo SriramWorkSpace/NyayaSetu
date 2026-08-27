@@ -1,0 +1,45 @@
+# ── dependencies ──────────────────────────────
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ── build output ──────────────────────────────
+dist/
+build/
+app/src-tauri/target/
+target/
+
+# ── datasets: fetched, never committed ────────
+ml/data/
+
+# ── model artifacts: git-lfs only, see .gitattributes
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.faiss
+*.index
+*.pkl
+*.joblib
+
+# ── derived knowledge graph ───────────────────
+graphify-out/
+
+# ── secrets ───────────────────────────────────
+.env
+.env.local
+!.env.example
+
+# ── scratch / OS / editor ─────────────────────
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/

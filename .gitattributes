@@ -1,0 +1,9 @@
+# Trained weights and indexes are large binaries — git-lfs, never git proper.
+backend/artifacts/** filter=lfs diff=lfs merge=lfs -text
+
+# Normalize line endings across Windows/macOS/Linux.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.pdf binary
