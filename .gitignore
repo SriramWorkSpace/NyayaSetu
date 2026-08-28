@@ -15,15 +15,23 @@ target/
 # ── datasets: fetched, never committed ────────
 ml/data/
 
-# ── model artifacts: git-lfs only, see .gitattributes
-*.pt
-*.pth
-*.bin
-*.safetensors
-*.faiss
-*.index
-*.pkl
-*.joblib
+# ── model artifacts ────────────────────────────
+# backend/artifacts/** is git-lfs tracked via .gitattributes, not ignored -
+# these extensions must stay trackable there. A blanket *.joblib-style
+# ignore here previously made `git add` silently skip them even inside
+# backend/artifacts/, defeating the LFS setup entirely (caught in Phase 6
+# when trained model files never showed up in `git status`). Anything
+# matching these extensions OUTSIDE backend/artifacts/ is still unwanted -
+# scope the ignore to everywhere else instead of dropping it blanket.
+/**/*.pt
+/**/*.pth
+/**/*.bin
+/**/*.safetensors
+/**/*.faiss
+/**/*.index
+/**/*.pkl
+/**/*.joblib
+!backend/artifacts/**
 
 # ── derived knowledge graph ───────────────────
 graphify-out/

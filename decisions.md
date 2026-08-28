@@ -171,3 +171,36 @@ Its *interaction* — click → heading lifts away → arrow flies off → a sec
 **Decision.** Add `GET /api/v1/case/{case_id}` returning title, court, year, case number, IPC sections, full text, and the extractive summary with its sentence provenance. Purely additive - no existing route, schema, or client changes. `qa.py` and `summarize.py` now resolve `case_id` against the same fixture (`app/fixtures/cases.json`) that this endpoint serves, so a search result, its case detail, its QA answers, and its summary are all internally consistent for the same two demo cases.
 
 **Consequences.** ARCHITECTURE.md section 6 is now incomplete as written; the addition is documented here rather than silently expanding the spec. Phase 9 needs a real `case_id -> document` resolution path in the retrieval/storage layer, not just in a fixture file - this is now a stated requirement for that phase, not an assumption.
+
+---
+
+## D-014 · Bail model excludes `custody_days`, `accused_gender`, and post-hoc reasoning fields
+**2026-08-28 · accepted**
+
+**Context.** ARCHITECTURE.md's `BailPredictRequest` schema (frozen in Phase 3, before any real data existed) includes `custody_days`. The actual dataset — IndianBailJudgments-1200 — has no such field anywhere; it was never collected. Separately, the raw records include `judgment_reason`, `summary`, and `bail_outcome_label_detailed`, all of which describe the court's own conclusion, and `accused_gender` and `bias_flag`, which are protected-characteristic and fairness-annotation fields respectively.
+
+**Decision.** The trained bail model (`ml/src/train/train_bail.py`) does not use `custody_days` — the field stays in the API contract for forward-compatibility, but Phase 9's real wiring needs to either resolve this (drop the field, or add a data-collection path that populates it) rather than silently ignore the mismatch. `judgment_reason`, `summary`, and `bail_outcome_label_detailed` are excluded from every feature set outright — training on them is not prediction, it's reading the conclusion off a field that states the conclusion. `accused_gender` and `bias_flag` are excluded from training deliberately, not by oversight, so the Phase 8 fairness audit can test whether predictions correlate with gender through legitimate proxies without the model having ever seen gender directly.
+
+**Consequences.** Phase 9 has an open item logged in `ml/reports/bail_audit.md`: decide what happens to `custody_days` before wiring the real model behind `/predict/bail`. The excluded fields are documented in `MODEL_CARD_bail.md` so a future contributor doesn't "helpfully" add gender or the outcome-describing fields back in as an accuracy improvement without understanding why they were left out.
+
+---
+
+## D-015 · Residual hindsight-framing risk in `facts` text, disclosed rather than "fixed"
+**2026-08-28 · accepted**
+
+**Context.** 32% of records (384/1,200) have `facts` text where "bail" co-occurs with an outcome word (granted/rejected/cancelled/denied/allowed). Manual review found this is a mix of legitimate prior-proceeding history (real signal - "previously denied bail, the High Court reversed this") and, in some records, language that plainly states *this* judgment's own conclusion inside the fact recitation - a genuine leakage risk beyond the exact-duplicate check CLAUDE.md section 7 names specifically.
+
+**Decision.** No regex-based redaction was attempted. Separating "legitimate prior-proceeding narration" from "this decision's outcome stated early" reliably needs more than pattern matching, and a fragile fix that looks like a fix is worse than an honest number: it would have created false confidence in the reported F1 without reliably removing the risk. Instead, a structured-features-only ablation (XGBoost, no `facts`/`legal_issues` text) is trained and reported in `MODEL_CARD_bail.md` alongside the full-feature numbers: F1 0.7718 (structured-only) vs. 0.8117 (full model). The ~4-point gap is the number to read skeptically - it may be partly real signal, partly the disclosed risk.
+
+**Consequences.** The bail model's F1/PR-AUC on the Insights screen should not be read as a clean, leakage-free number without this context - the model card carries the caveat, and this decision entry is the pointer to it. If a later phase adds proper sentence-level provenance (which paragraph of a judgment a fact came from, filed before vs. after the ruling), this ablation gap is the number that should shrink and can be used to check whether a fix actually worked.
+
+---
+
+## D-016 · Fixed: root `.gitignore` was silently blocking git-lfs artifact tracking
+**2026-08-28 · accepted**
+
+**Context.** Phase 0's `.gitignore` blanket-ignored `*.joblib`, `*.pt`, `*.pth`, `*.bin`, `*.safetensors`, `*.faiss`, `*.index`, `*.pkl`, commented "model artifacts: git-lfs only, see .gitattributes" — intending these to route through LFS. A gitignore exclusion prevents `git add` from staging a file at all, regardless of `.gitattributes`; it does not hand the file to LFS, it hides it from git entirely. Caught in Phase 6 when the first real trained model files (`backend/artifacts/bail/*.joblib`) never appeared in `git status` after training.
+
+**Decision.** Scoped the extension-based ignores to everywhere except `backend/artifacts/` via `/**/*.ext` patterns plus a `!backend/artifacts/**` negation, verified to work without `git add -f`. `git lfs status` confirms these files now route through LFS as intended.
+
+**Consequences.** Any artifact trained before this fix (only Phase 6's bail models) needed re-staging; none had been silently lost since they were never committed in the first place, just invisible to `git status` until now. Worth remembering: a gitignore rule and a gitattributes LFS rule are not the same thing, and writing one while intending the other fails silently rather than erroring.

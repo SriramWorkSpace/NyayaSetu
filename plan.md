@@ -13,7 +13,7 @@
 | 3 | Contract stub backend | ✅ complete |
 | 4 | Screens | ✅ complete |
 | 5 | Tauri shell | ✅ complete |
-| 6 | Data & bail baselines | ⬜ not started |
+| 6 | Data & bail baselines | ✅ complete |
 | 7 | Core models | ⬜ not started |
 | 8 | Fairness audit | ⬜ not started |
 | 9 | Real backend | ⬜ not started |

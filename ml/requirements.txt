@@ -1,0 +1,11 @@
+# ml/ writes; backend/ only reads (CLAUDE.md section 2). This venv is
+# separate from backend/.venv: ml/ needs data-fetching and training
+# tooling backend/ never needs for serving.
+pandas
+numpy
+scikit-learn
+xgboost
+datasets
+huggingface_hub
+joblib
+pyarrow
