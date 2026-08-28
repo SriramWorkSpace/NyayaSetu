@@ -9,8 +9,8 @@
 |---|---|---|
 | 0 | Foundation & documents | ✅ complete |
 | 1 | Design system & component library | ✅ complete |
-| 2 | Shell, startup page, navigation | 🟡 partial (API client pending) |
-| 3 | Contract stub backend | ⬜ not started |
+| 2 | Shell, startup page, navigation | ✅ complete |
+| 3 | Contract stub backend | ✅ complete |
 | 4 | Screens | ⬜ not started |
 | 5 | Tauri shell | ⬜ not started |
 | 6 | Data & bail baselines | ⬜ not started |

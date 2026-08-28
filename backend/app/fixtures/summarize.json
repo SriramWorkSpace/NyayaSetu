@@ -1,0 +1,13 @@
+{
+  "example": {
+    "summary_sentences": [
+      "The petitioner was arrested on 14 March 2024 under Sections 420 and 468 of the IPC.",
+      "The prosecution alleges misappropriation of funds amounting to Rs. 12.4 lakh.",
+      "The petitioner has no prior criminal record and has cooperated with the investigation.",
+      "The court finds the custody period disproportionate to the alleged offence's severity.",
+      "Bail is granted subject to a personal bond and surrender of the passport."
+    ],
+    "source_indices": [2, 7, 14, 22, 31],
+    "compression_ratio": 0.09
+  }
+}

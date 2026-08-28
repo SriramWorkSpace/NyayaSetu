@@ -1,0 +1,38 @@
+{
+  "clean": {
+    "raw_text": "IN THE HIGH COURT OF DELHI AT NEW DELHI\nCRL.A. 1274/2019\n\nSTATE OF NCT OF DELHI ... Appellant\nVERSUS\nRAVI KUMAR ... Respondent\n\nDate of Judgment: 18.09.2019\nSections: 302, 34 IPC",
+    "ocr_confidence": 0.94,
+    "entities": {
+      "case_number": "CRL.A. 1274/2019",
+      "court": "High Court of Delhi",
+      "parties": ["State of NCT of Delhi", "Ravi Kumar"],
+      "ipc_sections": ["302", "34"],
+      "dates": ["18.09.2019"]
+    },
+    "field_confidence": {
+      "case_number": 0.97,
+      "court": 0.95,
+      "parties": 0.91,
+      "ipc_sections": 0.93,
+      "dates": 0.96
+    }
+  },
+  "low_quality": {
+    "raw_text": "IN THE H1GH C0URT 0F DELН1 ... CRL.A 1Z74/2Ol9 ... St4te 0f NCT ...",
+    "ocr_confidence": 0.38,
+    "entities": {
+      "case_number": null,
+      "court": "High Court of Delhi",
+      "parties": [],
+      "ipc_sections": [],
+      "dates": []
+    },
+    "field_confidence": {
+      "case_number": 0.12,
+      "court": 0.44,
+      "parties": 0.08,
+      "ipc_sections": 0.05,
+      "dates": 0.09
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "granted": {
+    "outcome": "granted",
+    "probability": 0.74,
+    "confidence_band": "medium",
+    "factors": [
+      { "name": "No prior convictions", "direction": "for_grant", "weight": 0.31 },
+      { "name": "Custody duration exceeds 90 days", "direction": "for_grant", "weight": 0.22 },
+      { "name": "Crime category: economic offence", "direction": "for_denial", "weight": -0.14 },
+      { "name": "Cooperative during investigation", "direction": "for_grant", "weight": 0.09 }
+    ],
+    "model_version": "xgboost-stub-0.1.0"
+  },
+  "denied": {
+    "outcome": "denied",
+    "probability": 0.81,
+    "confidence_band": "high",
+    "factors": [
+      { "name": "Crime category: violent offence", "direction": "for_denial", "weight": -0.38 },
+      { "name": "Prior record: 2 convictions", "direction": "for_denial", "weight": -0.27 },
+      { "name": "Flight risk indicators present", "direction": "for_denial", "weight": -0.19 },
+      { "name": "Short custody duration", "direction": "for_denial", "weight": -0.08 }
+    ],
+    "model_version": "xgboost-stub-0.1.0"
+  },
+  "low_confidence": {
+    "outcome": "granted",
+    "probability": 0.53,
+    "confidence_band": "low",
+    "factors": [
+      { "name": "Mixed prior record signals", "direction": "for_grant", "weight": 0.06 },
+      { "name": "Crime category: ambiguous classification", "direction": "for_denial", "weight": -0.05 }
+    ],
+    "model_version": "xgboost-stub-0.1.0"
+  },
+  "baseline_granted": { "outcome": "granted", "probability": 0.68, "model_name": "logistic_regression" },
+  "baseline_denied": { "outcome": "denied", "probability": 0.72, "model_name": "logistic_regression" }
+}

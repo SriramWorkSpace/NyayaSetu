@@ -1,0 +1,9 @@
+{
+  "results": [
+    { "case_id": "case_0412", "title": "State v. Ravi Kumar", "court": "Delhi HC", "year": 2019, "score": 0.89, "snippet": "...bail granted on furnishing a personal bond of Rs. 25,000 given the accused's clean prior record..." },
+    { "case_id": "case_0198", "title": "Suresh Nair v. State of Kerala", "court": "Kerala HC", "year": 2021, "score": 0.81, "snippet": "...custody duration of 94 days found disproportionate to the alleged offence under Section 420..." },
+    { "case_id": "case_0733", "title": "State v. Manoj Yadav", "court": "Allahabad HC", "year": 2018, "score": 0.76, "snippet": "...flight risk indicators outweighed by cooperative conduct during investigation..." },
+    { "case_id": "case_1091", "title": "Prakash Singh v. Union of India", "court": "Supreme Court", "year": 2020, "score": 0.68, "snippet": "...economic offences require closer scrutiny of custodial necessity..." },
+    { "case_id": "case_0567", "title": "State of Maharashtra v. Anita Desai", "court": "Bombay HC", "year": 2022, "score": 0.61, "snippet": "...no material to suggest tampering with evidence if released on bail..." }
+  ]
+}

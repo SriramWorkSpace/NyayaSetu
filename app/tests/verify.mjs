@@ -150,6 +150,20 @@ for (const width of [1024, 1600]) {
   await ctx.close();
 }
 
+// ---- 8. End to end: Home actually round-trips to the live backend --------
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 832 } });
+  const page = await ctx.newPage();
+  await page.goto(BASE + '/app', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  const subtitle = await page.locator('header p').first().textContent();
+  check('Home connects to the live backend over the typed client', subtitle?.includes('connected'), `got "${subtitle}"`);
+  const backendPill = page.locator('text=BACKEND').locator('..');
+  const pillText = await backendPill.textContent().catch(() => null);
+  check('stat pill shows live backend status, not hardcoded', pillText?.toLowerCase().includes('ok'), `got "${pillText}"`);
+  await ctx.close();
+}
+
 // ---- Screenshots for visual record ---------------------------------------
 {
   for (const theme of ['light', 'dark']) {
