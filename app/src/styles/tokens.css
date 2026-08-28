@@ -1,0 +1,209 @@
+/* ============================================================================
+   NyayaSetu design tokens - THE single source. See CLAUDE.md section 5.
+   Judiciary typewriter: monochrome paper and ink, two themes, one token set.
+   No color, space, or radius may be defined anywhere else.
+   ========================================================================= */
+
+@import 'tailwindcss';
+
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
+@import '@fontsource/space-mono/400-italic.css';
+@import '@fontsource/special-elite/400.css';
+
+/* Dark theme is opt-in via [data-theme="dark"] on <html>.
+   theme.ts resolves system preference to an explicit attribute at boot, so the
+   toggle can always win and there is never an unstyled flash. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+  /* ---- Paper and ink (light: "Paper") -------------------------------- */
+  --color-paper: #f4f1ea;
+  --color-paper-raised: #fbf9f4;
+  --color-ink: #14120f;
+  --color-ink-muted: #57534e;
+  --color-ink-subtle: #8a857d;
+  --color-rule: #d6d1c4;
+
+  /* ---- Semantic. Outline and text only, NEVER a fill. ---------------- */
+  --color-granted: #4a6b57;
+  --color-denied: #7a4a42;
+  --color-caution: #8a7420;
+
+  /* ---- Type ----------------------------------------------------------
+     Space Mono  -> headings AND every machine-extracted or measured value.
+     Special Elite -> all prose and small text. ONE weight (400) only:
+     hierarchy comes from size, tracking and opacity, never font-weight. */
+  --font-mono: 'Space Mono', ui-monospace, 'Courier New', monospace;
+  --font-body: 'Special Elite', 'Courier New', ui-monospace, monospace;
+
+  --text-display: 3.5rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.02em;
+  --text-h1: 1.75rem;
+  --text-h1--line-height: 1.15;
+  --text-h1--letter-spacing: -0.01em;
+  --text-h2: 1.25rem;
+  --text-h2--line-height: 1.3;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+  --text-caption: 0.6875rem;
+  --text-caption--line-height: 1.4;
+  --text-caption--letter-spacing: 0.05em;
+  --text-data: 0.8125rem;
+  --text-data--line-height: 1.4;
+
+  /* ---- Radius (CLAUDE.md 5.1) ---------------------------------------- */
+  --radius-input: 12px;
+  --radius-card: 20px;
+  --radius-panel: 28px;
+
+  /* ---- Motion. Every duration here is gated by prefers-reduced-motion. */
+  --ease-paper: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-page: 220ms;
+  --duration-rail: 240ms;
+
+  /* ---- Shell geometry ------------------------------------------------- */
+  --rail-collapsed: 5.25rem;
+  --rail-expanded: 15rem;
+  --content-max: 1120px;
+}
+
+/* Dark theme: "Carbon". Only the paper/ink ramp inverts. Semantic tones are
+   identical in both themes - they are aged stamp-pad inks, not status lights. */
+[data-theme='dark'] {
+  --color-paper: #0b0b0b;
+  --color-paper-raised: #151515;
+  --color-ink: #f2efe8;
+  --color-ink-muted: #a3a3a0;
+  --color-ink-subtle: #6b6b67;
+  --color-rule: #2a2a28;
+}
+
+/* ============================================================================
+   Base layer
+   ========================================================================= */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  [data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: var(--color-paper);
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Special Elite ships one weight. Asking for bold triggers a synthesised
+     faux-bold that smears a distressed face, so it is switched off globally.
+     Emphasis in small text comes from size, tracking and opacity. */
+  body,
+  .font-body {
+    font-synthesis-weight: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-mono);
+  }
+
+  ::selection {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* ============================================================================
+   Theme transition - originates from the toggle switch.
+
+   theme.ts writes --wipe-x / --wipe-y from the switch's live bounding rect,
+   then a View Transition clips the incoming theme to a circle growing from
+   that point. Without View Transitions support the swap is instant, which is
+   correct rather than degraded.
+   ========================================================================= */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Outgoing theme sits still underneath while the new one wipes over it. */
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+html[data-wipe='active']::view-transition-new(root) {
+  animation: wipe-from-switch 620ms var(--ease-paper) forwards;
+}
+
+@keyframes wipe-from-switch {
+  from {
+    clip-path: circle(0% at var(--wipe-x, 50%) var(--wipe-y, 50%));
+  }
+  to {
+    clip-path: circle(150% at var(--wipe-x, 50%) var(--wipe-y, 50%));
+  }
+}
+
+/* ============================================================================
+   Reduced motion - a hard gate, not a suggestion (CLAUDE.md 5.4)
+   ========================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html[data-wipe='active']::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}

@@ -125,3 +125,27 @@ Its *interaction* — click → heading lifts away → arrow flies off → a sec
 **Decision.** SECURITY.md holds both: the standard disclosure policy, plus the testing rulebook and a running per-phase outcome table appended at the end of every phase.
 
 **Consequences.** Slightly unconventional for a reader expecting disclosure-only — the file's own header states its dual purpose up front. The benefit is that testing obligations and their real outcomes sit in one auditable place rather than scattered across commit messages.
+
+---
+
+## D-010 · React 19, Vite 8 and Tailwind 4.3, above the versions named in ARCHITECTURE.md
+**2026-08-28 · accepted**
+
+**Context.** ARCHITECTURE.md §5.1 names React 18. `npm create vite` now scaffolds React 19 on Vite 8, and pinning back to 18 would mean fighting the template on every dependency for no stated benefit. Tailwind resolved to 4.3, which is what §5.1 asked for.
+
+**Decision.** Take the current versions: React 19.2, Vite 8.2, Tailwind 4.3, react-router 7, and `motion` 13 (the package formerly published as `framer-motion`; imports come from `motion/react`).
+
+**Consequences.** §5.1's "React 18" line is stale but its intent, a modern React on Vite with strict TypeScript, holds. Nothing in the codebase depends on React 18 semantics. `motion` rather than `framer-motion` is worth knowing when reading §5.1, which names the old package.
+
+---
+
+## D-011 · The theme toggle keeps its own literal colours
+**2026-08-28 · accepted**
+
+**Context.** Every colour in the app comes from `tokens.css` (CLAUDE.md 5.1). The supplied toggle stylesheet hardcodes `#d8dbe0` and `#28292c` for the track and knob, which reads as a violation of that rule.
+
+**Decision.** Keep them literal, scoped to `theme-toggle.css`, and say why in the file.
+
+**Consequences.** The switch is a depiction of light and dark, not a surface *in* light or dark. Theming it would make the knob vanish into whichever theme is active, destroying the affordance. This is the single documented exception to the token rule.
+
+**Related:** the positioning class has to sit on a wrapper element, because `.toggle-switch { position: relative }` in that stylesheet wins over a Tailwind `fixed` utility on the same node by source order. That cost one real layout bug before it was caught.

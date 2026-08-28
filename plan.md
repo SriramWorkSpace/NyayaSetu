@@ -8,8 +8,8 @@
 | # | Phase | Status |
 |---|---|---|
 | 0 | Foundation & documents | ✅ complete |
-| 1 | Design system & component library | ⬜ not started |
-| 2 | Shell, startup page, navigation | ⬜ not started |
+| 1 | Design system & component library | ✅ complete |
+| 2 | Shell, startup page, navigation | 🟡 partial (API client pending) |
 | 3 | Contract stub backend | ⬜ not started |
 | 4 | Screens | ⬜ not started |
 | 5 | Tauri shell | ⬜ not started |

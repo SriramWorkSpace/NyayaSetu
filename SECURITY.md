@@ -114,4 +114,7 @@ Appended at the end of every phase. Honest entries only — a phase that shipped
 |---|---|---|---|---|
 | 0 — Foundation & documents | 2026-08-28 | Document completeness; ARCHITECTURE.md §3–§4 rewrite consistency; cross-document agreement; git init + first push | **pass** | All 12 ARCHITECTURE.md sections intact after the splice; §6/§7/§11 byte-identical. Six stale references (Urbanist, JetBrains Mono, `gradients/`, `tailwind.config.ts` ×2, gradient open-decision) found and corrected. Pushed to `main`, authored as Sriram Madala, no AI attribution. No executable code in this phase. |
 
+| 1 - Design system & components | 2026-08-28 | `tsc -b` strict; production build; token utilities present in built CSS; every primitive rendered on `/sandbox` in both themes; em-dash audit | **pass** | Two real bugs found and fixed: the theme toggle rendered top-left (`.toggle-switch { position: relative }` beat the Tailwind `fixed` utility by source order), and the collapsed nav rail clipped its 32px icons at 72px. Verified by screenshot, not assumed. |
+| 2 - Shell, startup, navigation | 2026-08-28 | Rail expand pushes content at 1024px and 1440px; routing across all six destinations; startup type-on and hand-off | **partial** | Screens are designed empty states, not live data. `lib/api.ts` and the page-transition audit under `prefers-reduced-motion` are outstanding and close with Phase 3. |
+
 <!-- Append one row per phase. Do not edit past rows — if an earlier result is later invalidated, add a new row saying so. -->
