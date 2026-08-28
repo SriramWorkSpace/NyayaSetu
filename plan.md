@@ -7,7 +7,7 @@
 
 | # | Phase | Status |
 |---|---|---|
-| 0 | Foundation & documents | 🟡 in progress |
+| 0 | Foundation & documents | ✅ complete |
 | 1 | Design system & component library | ⬜ not started |
 | 2 | Shell, startup page, navigation | ⬜ not started |
 | 3 | Contract stub backend | ⬜ not started |

@@ -1,7 +1,7 @@
 # NyayaSetu: Indian Legal Intelligence Suite — Architecture
 
 > Single source of truth for the build. Read this fully before writing code.
-> **Owner:** Sriram Madala · B.Tech CSE, VIT
+> **Owner:** Sriram Madala 
 > **Platform:** Desktop app (Tauri), local-first demo
 > **Status:** Planning → Build
 
@@ -65,116 +65,84 @@ All five core components (bail prediction, QA, summarization, retrieval, NER ext
 
 ## 3. Design system
 
-Visual direction: **judiciary typewriter** — a monochrome paper-and-ink surface, floating cards, hairline rules, oversized numerals set in mono, and rubber-stamp verdicts. Chosen deliberately against the genre default for legal software (dense serif-on-white, government-portal styling): the typewriter is the instrument of the court record, and rendering a machine's findings *as if typed onto a case file* makes a statistical tool feel considered and honest rather than institutional or oracular.
-
-The palette is black and white on purpose. This app reports uncertainty for a living, and a monochrome surface refuses to editorialize a result the data should speak for on its own.
-
-> **Supersedes** the earlier near-black / iridescent mesh-gradient / Urbanist system. See `decisions.md` D-001.
+Visual direction: near-black canvas, iridescent mesh-gradient hero panels, Urbanist geometric sans, pill-shaped controls, oversized numerals. Chosen deliberately against the genre default for legal software (dense serif-on-white, government-portal styling) — a calm dark surface with one luminous focal element per screen makes a serious tool feel considered rather than institutional.
 
 ### 3.1 Color tokens
 
-Two themes, one token set. Every screen carries a light/dark toggle, so **no color may be defined in only one theme.**
-
 ```css
-/* Light — "Paper" */
 :root {
-  --paper:         #F4F1EA;   /* canvas, ~70% of every screen */
-  --paper-raised:  #FBF9F4;   /* floating cards, inputs */
-  --ink:           #14120F;   /* primary text */
-  --ink-muted:     #57534E;   /* labels, captions */
-  --ink-subtle:    #8A857D;   /* metadata — never body copy */
-  --rule:          #D6D1C4;   /* 1px hairlines, card borders */
-}
+  --bg:              #0C0C0C;   /* canvas, ~70% of every screen */
+  --surface:         #181818;   /* cards, list rows */
+  --surface-raised:  #242424;   /* inputs, secondary buttons, elevated cards */
+  --stroke:          #2E2E2E;   /* 1px hairlines, card borders */
+  --accent:          #6578C8;   /* primary accent, active states, data highlight */
+  --accent-dim:      #3E4878;   /* accent at rest, inactive chart bars */
+  --fg:              #FFFFFF;   /* primary text, primary CTA fill */
+  --fg-muted:        #8A8A8A;   /* labels, captions, inactive nav */
+  --fg-subtle:       #5A5A5A;   /* metadata, timestamps — never body copy */
 
-/* Dark — "Carbon" */
-[data-theme="dark"] {
-  --paper:         #0B0B0B;
-  --paper-raised:  #151515;
-  --ink:           #F2EFE8;
-  --ink-muted:     #A3A3A0;
-  --ink-subtle:    #6B6B67;
-  --rule:          #2A2A28;
-}
-
-/* Semantic — identical in both themes */
-:root {
-  --granted:  #4A6B57;   /* bail granted */
-  --denied:   #7A4A42;   /* bail denied */
-  --caution:  #8A7420;   /* low confidence / poor OCR quality */
+  --granted:         #5FB88F;   /* bail-granted outcome */
+  --denied:          #C97064;   /* bail-denied outcome */
+  --caution:         #C9A227;   /* low-confidence / low-OCR-quality warning */
+  --metric-good:     #5FB88F;   /* metrics slide: model beat baseline */
+  --metric-flat:     #8A8A8A;   /* metrics slide: no meaningful change */
 }
 ```
 
-Semantic tones are **outline and text only, never a fill.** In a monochrome system they read as ink variants — aged stamp-pad colors — not as status lights. A saturated red for "denied" would editorialize an outcome the model is merely estimating.
+Outcome and metric colors are deliberately muted, not stoplight-saturated. A loud red for "denied" or "model got worse" editorializes a result the data should speak for on its own.
 
-Charts inherit `--ink` at varying opacity. A comparison bar distinguishes baseline from final by weight and fill pattern, not by hue.
-
-### 3.2 The paper panel
+### 3.2 The gradient panel
 
 The signature element, one per primary screen, nothing else on that screen competes with it.
 
-`PaperPanel` is **procedural, not a pre-rendered asset**: an inline SVG `feTurbulence` grain layer at low opacity, a soft vignette, and faint ruled "platen" baselines — the impression of a sheet rolled into a typewriter. Because it is drawn from `currentColor`, it follows the light/dark toggle for free, which a static image could not.
+CSS gradients read as flat and templated for this look — do not attempt it with `background: linear-gradient(...)` stacking. **Pre-render 4 mesh-gradient PNGs/WebPs** (1600×900, ~80KB each) in Figma (mesh gradient plugin) or a small Python script (Perlin-noise-seeded radial blends), ship as static assets, and apply a slow CSS `background-position`/`transform: scale()` drift (10–14s, `prefers-reduced-motion` respected) so the panel breathes.
 
-Variants are parameters on the one component (grain density, rule spacing, vignette strength), not separate files:
-
-- `record` — home / neutral, widest rule spacing
-- `verdict` — bail result, tighter rules, heavier vignette, room for the stamp
-- `scan` — document capture, faint edge-registration marks
-- `ledger` — Model Insights, tightest rules, most structured
-
-A slow drift on the grain layer (12s, `prefers-reduced-motion` respected) keeps the surface from reading as dead flat.
+Variants:
+- `aurora` — home / neutral
+- `verdict` — bail result screen, cooler and bluer
+- `scan` — document scan capture and result
+- `insights` — Model Insights screen, subtly more structured/technical-feeling
 
 ### 3.3 Typography
 
-Two faces, both self-hosted via `@fontsource` so the app works fully offline.
+**Urbanist** (Google Fonts, OFL license) as the primary face, self-hosted via `@fontsource/urbanist` so the app works fully offline.
 
-**The split is semantic, not decorative.** Space Mono marks anything a machine extracted or measured; Special Elite carries everything a person wrote. A reader can tell the two apart at a glance, without a legend.
-
-| Role | Face · Size / Weight | Use |
+| Role | Size / Weight | Use |
 |---|---|---|
-| Display | Space Mono 56 / 700, tracking -1 | one big number per screen: probability, F1, confidence |
-| H1 | Space Mono 28 / 700 | screen titles |
-| H2 | Space Mono 20 / 400 | section headers |
-| Body | Special Elite 15 / 400, line-height 1.6 | paragraphs, judgment text, summaries |
-| Label | Special Elite 13 / 400 | field labels, list row titles |
-| Caption | Special Elite 11 / 400, tracking +0.5, uppercase | eyebrows, metadata, metric names |
-| Data | Space Mono 13 / 400 | case numbers, IPC sections, statute codes, F1/ROUGE/Precision@k values |
+| Display | 56 / 700, tracking -1 | one big number per screen: probability, F1 score, confidence |
+| H1 | 28 / 700 | screen titles |
+| H2 | 20 / 600 | section headers |
+| Body | 15 / 400, line-height 1.5 | paragraphs, judgment text, summaries |
+| Label | 13 / 500 | field labels, list row titles |
+| Caption | 11 / 500, tracking +0.5, uppercase | eyebrows, metadata, metric names |
+| Mono | JetBrains Mono 13 / 400 | IPC sections, case numbers, statute codes, metric values on the Insights screen |
 
-> ⚠️ **Special Elite ships exactly one weight (400).** Hierarchy in small text must come from **size, letter-spacing, and opacity — never `font-weight`.** A `font-semibold` on Special Elite silently does nothing, which makes it a hierarchy bug that passes code review.
-
-Special Elite is a distressed face: it is set at 15px minimum with generous line-height, and never in long unbroken blocks below that size.
+Mono is used specifically for anything that is an identifier or a measured number rather than prose — case numbers, statute citations, F1/ROUGE/Precision@k values — so machine-extracted or machine-measured content is visually distinct from written text.
 
 ### 3.4 Layout & motion
 
-- **Spacing scale:** 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64. Content max-width 1120px, centered — this is a desktop window, not a phone screen.
-- **Radius:** 12 (inputs, small cards), 20 (content cards), 28 (paper panel), 999 (pills, segmented controls).
-- **Floating cards.** Content sits in detached cards over the paper canvas — 1px `--rule` border, radius 20, and never bleeding to the window edge. In light mode a soft low-opacity shadow lifts them; in dark mode there are **no drop shadows** — depth comes from the `--paper` → `--paper-raised` step and hairlines only.
-- **Navigation pushes, never covers.** The floating left rail expands 64px → 240px on hover by animating the shell's `grid-template-columns`. An overlay drawer would cover content at 1024px; a push keeps every screen readable at the minimum window size.
-- **Motion:** Framer Motion. Page transitions 220ms ease-out (paper-lift + cross-dissolve). Rail expand 240ms. Numbers count up on first render (400ms). Chart bars stagger at 40ms. Text on the startup screen types on, with a caret.
-- **Theme transition originates from the switch.** The toggle sits fixed at the top right of every screen; flipping it runs a View Transitions API pass with a `clip-path: circle()` expanding from the switch's live `getBoundingClientRect()` centre — the new theme wipes outward from the control that caused it. Falls back to an instant class swap where unsupported.
-- **All motion is gated behind `usePrefersReducedMotion()`.** No exceptions.
-- **Window:** default 1280×832, min 1024×720. Design for a resizable window — components must reflow between 1024px and 1600px without breaking.
+- **Spacing scale:** 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64. Content max-width 1120px, centered, since this is a desktop window, not a phone screen.
+- **Radius:** 12 (inputs, small cards), 20 (content cards), 28 (gradient hero panel), 999 (pills, segmented controls).
+- **Elevation:** no drop shadows on dark backgrounds. Depth comes from `--surface` → `--surface-raised` steps and 1px `--stroke` hairlines only.
+- **Motion:** Framer Motion. Screen transitions 220ms ease-out. Numbers count up on first render (400ms). Chart bars stagger in at 40ms intervals. All gated behind `usePrefersReducedMotion()`.
+- **Window:** default 1280×832, min 1024×720. This is a desktop app; design for a resizable window, not a fixed viewport — components must reflow between a 1024px and a 1600px window without breaking.
 
 ### 3.5 Component inventory
 
-Build once in `app/src/components/ui/`, reuse everywhere. No per-screen one-offs: if two screens need it, it belongs here.
+Build once in `src/components/ui/`, reuse everywhere. No per-screen one-offs.
 
-`PaperPanel` · `FloatingCard` · `StatPill` · `StatCard` · `SegmentedControl` · `ListRow` · `PrimaryButton` · `IconButton` · `Chip` · `BarChart` (hand-rolled SVG) · `ConfidenceMeter` · `MetricComparisonBar` · `CalibrationCurve` (hand-rolled SVG) · `SpanHighlighter` · `StampBadge` · `Typewriter` · `EmptyState` · `SkeletonBlock` · `Toast` · `Sheet` (side panel) · `ThemeToggle`
+`GradientPanel` · `StatCard` · `SegmentedControl` · `ListRow` · `PrimaryButton` · `IconButton` · `Chip` · `BarChart` (hand-rolled SVG) · `ConfidenceMeter` · `MetricComparisonBar` · `CalibrationCurve` (hand-rolled SVG) · `SpanHighlighter` · `EmptyState` · `SkeletonBlock` · `Toast` · `Sheet` (side panel, replaces mobile bottom sheet)
 
-Charts are hand-rolled SVG (`d3-scale` for math only, no chart library rendering), because off-the-shelf chart libraries impose their own visual defaults that will fight this design system, and the actual chart complexity here — bar comparisons, a calibration curve, a confidence meter — is small enough to own directly.
-
-`StampBadge` is the verdict element: an outlined, slightly rotated rubber stamp in `--granted` or `--denied`, never a filled pill. `Typewriter` types text on with a blinking caret and resolves instantly under reduced motion.
+Charts are hand-rolled SVG (`d3-scale` for math only, no chart library rendering), because off-the-shelf chart libraries impose their own visual defaults that will fight this design system, and the actual chart complexity here (bar comparisons, a calibration curve, a confidence meter) is small enough to own directly.
 
 ---
 
 ## 4. Screen architecture
 
-Floating left rail navigation (desktop convention, not a bottom tab bar), collapsed to icons and expanding to icon + label on hover, **pushing** page content rather than covering it. A `ThemeToggle` is pinned at the top right of every screen.
+Left rail navigation (desktop convention, not a bottom tab bar), collapsible, icon + label. Six destinations:
 
 ```
-┌─ Startup                      full-screen, pre-shell
-│    typed wordmark → "Enter the Suite" → hands off into the shell
-│
-├─ App Shell
+┌─ App Shell
 │   ├── Home                index
 │   ├── Predict Bail         predict
 │   ├── Scan Document        scan
@@ -187,34 +155,29 @@ Floating left rail navigation (desktop convention, not a bottom tab bar), collap
     └── Settings
 ```
 
-**Shared page structure.** Every shell screen follows the same skeleton, adapted from a dense operations-dashboard layout: a top row of compact `StatPill`s (live counts and headline metrics), then the screen title with a date line beneath it, then a `Chip` filter row, then the working area — a large canvas with `FloatingCard`s overlaid toward the left and a vertical `IconButton` control stack pinned right. Consistency here is what lets one component inventory serve six screens.
-
-### 4.0 Startup
-Full-bleed `PaperPanel` (`record`). The wordmark types on with a caret, then the tagline beneath it. Below, an `EnterSuite` control — a large mono heading that lifts away on click as its arrow flies off-corner, resolving into the app shell. This is the first impression and it sets the language for every transition that follows: paper, type, and deliberate movement.
-
 ### 4.1 Home
-`PaperPanel` (`record`) showing the most recent activity — last prediction or last scan, whichever is newer — with its headline figure in Display type. Below: three quick actions (Predict · Scan · Search) as equal-weight `FloatingCard`s. Below that, a recent-activity list, each `ListRow` an icon chip, title, subtitle, and right-aligned result value in mono.
+Gradient panel (`aurora`) showing the most recent activity instead of a balance figure — last prediction or last scan, whichever is more recent. Below: three quick actions (Predict · Scan · Search) as equal-weight cards. Below that: a recent-activity list, each row an icon chip, title, subtitle, and right-aligned result value.
 
 ### 4.2 Predict Bail
-A grouped form, not a wall of fields: crime category (chip select), IPC sections (searchable multi-select with mono chips), custody duration (stepper), prior record (toggle), optional case narrative (textarea). Sticky primary button opens the **Result panel**.
+A grouped form, not a wall of fields: crime category (chip select), IPC sections (searchable multi-select with mono-styled chips), custody duration (stepper), prior record (toggle), optional case narrative (textarea). Sticky primary button opens the **Result panel**.
 
 ### 4.3 Result panel (bail)
-`PaperPanel` (`verdict`). The probability sits in Display mono as the single focal number, with a `StampBadge` verdict rotated beside it. Below: `ConfidenceMeter`, then a horizontal bar chart of top SHAP factors (name, direction arrow, magnitude). Then a one-line calibration note pulled from `/metrics` (§2.2 #15). Then the **live baseline toggle** (§2.2 #13) — flipping it re-queries `/predict/bail/baseline` with the same inputs and shows both predictions stacked for direct comparison. Persistent disclaimer chip at the bottom.
+Gradient panel (`verdict`) with the outcome and probability in Display type. Below: `ConfidenceMeter`, then a horizontal bar chart of top SHAP factors (name, direction arrow, magnitude). Then a one-line calibration note pulled from `/metrics` (§2.2 #15). Then the **live baseline toggle** (§2.2 #13) — flipping it re-queries `/predict/bail/baseline` with the same inputs and shows both predictions stacked. Persistent disclaimer chip at the bottom.
 
 ### 4.4 Scan Document
-Camera capture view (browser `getUserMedia` inside the Tauri webview) with a document-edge frame overlay, or a "choose file" fallback for a photo already on disk. After capture: skeleton loading, then a two-column `StatCard` grid of extracted fields, an OCR-confidence chip (`--caution` outline if low, with a "Retake" action), and the field-vs-OCR error split (§2.2 #19) shown as a visible caption, not hidden. A separate "Summarize this text" button sends the OCR'd text to `/summarize` on demand — deliberately a second, explicit step (§2.1).
+Camera capture view (browser `getUserMedia` inside the Tauri webview) with a document-edge frame overlay, or a "choose file" fallback for a photo already on disk. After capture: skeleton loading, then a two-column `StatCard` grid of extracted fields, an OCR-confidence chip (amber if low, with a "Retake" action), and the field-vs-OCR error split (§2.2 #19) shown as a small caption, not hidden. A separate "Summarize this text" button sends the OCR'd text to `/summarize` on demand — deliberately a second, explicit step (§2.1).
 
 ### 4.5 Search Precedent
-Search field under a `PaperPanel` (`record`, reused). Results as `ListRow`s: case title, court/year in caption, similarity score right-aligned in mono. Selecting a result opens **Case Detail**.
+Search field under a gradient panel (`aurora`, reused). Results as `ListRow`s: case title, court/year in caption, similarity score right-aligned in mono. Selecting a result opens **Case Detail**.
 
 ### 4.6 Case Detail
-Judgment text with the extractive summary pinned in a collapsed `FloatingCard` at the top, sentence provenance visible on expand (§2.2 #17). A floating "Ask" button opens a `Sheet` where a typed question returns a highlighted span **inside the judgment text itself**, scrolled into view — never a separate chat-style answer bubble. The model is extractive, and the UI should say so honestly.
+Judgment text with the extractive summary pinned in a collapsed card at the top, sentence provenance visible on expand (§2.2 #17). A floating "Ask" button opens a `Sheet` where a typed question returns a highlighted span **inside the judgment text itself**, scrolled into view — never a separate chat-style answer bubble, since the model is extractive and the UI should say so honestly.
 
-### 4.7 Model Insights
-`PaperPanel` (`ledger`) — the most structured surface in the app, tightest rules, closest to a printed evaluation table. A `SegmentedControl` across the five modules. For the selected module:
-- Baseline → final comparison as a `MetricComparisonBar` (e.g. LogReg 0.71 F1 → XGBoost 0.78 → InLegalBERT 0.84, three bars, one metric)
-- Full metric table, values in mono: F1, PR-AUC, ROUGE, Precision@k, MRR, entity F1 — whichever apply
-- For Bail specifically: the `CalibrationCurve`, and the fairness audit's disparity numbers before and after controlling for legitimate factors
+### 4.7 Model Insights *(new — the DS-transparency screen)*
+Gradient panel (`insights`). A `SegmentedControl` across the five modules. For the selected module:
+- Baseline → final model comparison as a `MetricComparisonBar` (e.g., LogReg 0.71 F1 → XGBoost 0.78 → InLegalBERT 0.84, three bars, one metric)
+- Full metric table (mono values): F1, PR-AUC, ROUGE, Precision@k, MRR, entity F1 — whichever apply to that module
+- For Bail specifically: the `CalibrationCurve` and the fairness audit's disparity numbers, before and after controlling for legitimate factors
 - Dataset size and last-trained timestamp, sourced live from `/metrics`
 - A closing note, identical in spirit to §2.3, restating that this module is independently trained and what, if anything, an API touches at its edge
 
@@ -235,7 +198,7 @@ This screen is not an afterthought tab; it is where a demo should end. Predict s
 | Motion | **Framer Motion** | Declarative, respects reduced-motion, works natively in a webview |
 | Charts | **Hand-rolled SVG** + `d3-scale` for axis math | See §3.5 rationale |
 | Icons | **lucide-react** | Same icon family as originally planned, web build |
-| Fonts | **@fontsource/space-mono**, **@fontsource/special-elite** | Self-hosted, fully offline |
+| Fonts | **@fontsource/urbanist**, **@fontsource/jetbrains-mono** | Self-hosted, fully offline |
 | Client state | **Zustand** | Small, no boilerplate |
 | Server state | **@tanstack/react-query** | Caching, retry, and loading states for model calls that can take a few seconds |
 | Forms | **react-hook-form** + **zod** | Typed validation for the bail-prediction form |
@@ -352,7 +315,7 @@ GET  /health
 ## 8. Repository layout
 
 ```
-NyayaSetu/
+legal-intelligence-suite/
 ├── ARCHITECTURE.md
 ├── app/                          # Tauri application
 │   ├── src/                      # React frontend
@@ -361,14 +324,14 @@ NyayaSetu/
 │   │   │   ├── ui/                 # §3.5 inventory
 │   │   │   └── feature/
 │   │   ├── lib/  api.ts · store.ts · theme.ts
-│   │   ├── styles/  tokens.css            # §3.1 tokens, single source
+│   │   ├── assets/  gradients/ · fonts/
 │   │   ├── main.tsx
 │   │   └── App.tsx
 │   ├── src-tauri/                 # Rust shell
 │   │   ├── src/  main.rs
 │   │   ├── tauri.conf.json
 │   │   └── Cargo.toml
-│   ├── components.json            # shadcn: primitives → src/components/ui/
+│   ├── tailwind.config.ts         # tokens live here, single source
 │   ├── vite.config.ts
 │   └── package.json
 ├── backend/
@@ -402,7 +365,7 @@ Backend and models first, always. A polished app calling nothing is not a demo; 
 
 **Phase 4 — Backend API.** FastAPI wrapping all five modules plus `/predict/bail/baseline` and `/metrics`. Singleton loading verified (log a timestamp at model load, confirm it only fires once per process). Verify every endpoint with `curl` before touching the frontend.
 
-**Phase 5 — Design system.** Define the §3.1 tokens in `app/src/styles/tokens.css` (Tailwind v4 `@theme`) for both themes. Wire the two self-hosted faces. Build the §3.5 component inventory in an isolated sandbox route before starting real screens. `PaperPanel` is procedural — there are no gradient assets to generate.
+**Phase 5 — Design system.** Generate the four gradient assets. Wire tokens into `tailwind.config.ts`. Build the §3.5 component inventory in an isolated sandbox route before starting real screens.
 
 **Phase 6 — Tauri shell.** Scaffold `tauri init` against the Vite app. Wire `@tauri-apps/plugin-http`. Confirm a round trip to `/health` renders in the actual native window, not just the browser dev server, before building further — the webview and browser can behave differently and this catches it early.
 
@@ -452,7 +415,7 @@ Ship nothing that fails these:
 - Every prediction carries a visible confidence indicator and the disclaimer chip.
 - Reduced motion respected everywhere Framer Motion is used.
 - Text contrast ≥ 4.5:1 against `--bg`. `--fg-subtle` is metadata only, never body copy.
-- No hardcoded colors or spacing outside the token system in `app/src/styles/tokens.css`.
+- No hardcoded colors or spacing outside the token system in `tailwind.config.ts`.
 - Window resizes cleanly between 1024px and 1600px without overflow or clipped content.
 - Cold app launch to first meaningful paint under 2s; backend model warm-up under 10s, with a visible "warming up" state if the frontend connects before it's ready.
 
@@ -462,7 +425,7 @@ Ship nothing that fails these:
 
 Resolve before the phase that depends on each.
 
-- ~~**Gradient generation method**~~ — **resolved by removal.** The design system no longer uses gradients; `PaperPanel` draws its grain procedurally in SVG and themes itself. See `decisions.md` D-005.
+- **Gradient generation method** — Figma plugin (faster once, manual) vs. a small Python script (reproducible, tunable per screen). *(Phase 5)*
 - **NER backbone** — spaCy (lighter, faster to iterate) vs. InLegalBERT token classification (likely stronger, heavier to serve locally). Benchmark both on the same weak-supervised set before committing. *(Phase 2)*
 - **Judgment corpus size for FAISS** — cap the Indian Kanoon subset at a defensible size (e.g. 20–30k judgments) for local memory/index-build time, and state the cap explicitly in the retrieval model card. *(Phase 2)*
 - **Sidecar packaging** — bundle FastAPI as a PyInstaller binary launched automatically by Tauri, vs. keep it a manually-run second process. Manual is faster while iterating; sidecar is worth doing once the API is stable and you want a genuine one-click demo. *(Phase 10, optional)*
