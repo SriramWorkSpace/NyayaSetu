@@ -149,3 +149,25 @@ Its *interaction* — click → heading lifts away → arrow flies off → a sec
 **Consequences.** The switch is a depiction of light and dark, not a surface *in* light or dark. Theming it would make the knob vanish into whichever theme is active, destroying the affordance. This is the single documented exception to the token rule.
 
 **Related:** the positioning class has to sit on a wrapper element, because `.toggle-switch { position: relative }` in that stylesheet wins over a Tailwind `fixed` utility on the same node by source order. That cost one real layout bug before it was caught.
+
+---
+
+## D-012 · Case Library persists via Zustand + localStorage, not SQLite
+**2026-08-28 · accepted**
+
+**Context.** ARCHITECTURE.md section 12 left this open, to be settled at Phase 4: `tauri-plugin-sql` for durability across restarts, versus a session-only Zustand store.
+
+**Decision.** Zustand with its `persist` middleware, writing to `localStorage`. This survives an app restart, which was the actual requirement behind the SQLite option, without standing up a database, a migration story, or a Rust-side plugin for a single-user local app with a few dozen records.
+
+**Consequences.** State lives per-browser-profile, not in a queryable database - fine for "did I predict this before," not fine if the project ever needs to query across saved cases at scale. Revisit only if Case Library outgrows a list a user can scroll.
+
+---
+
+## D-013 · `GET /case/{case_id}` added - not in the original section 6 contract
+**2026-08-28 · accepted**
+
+**Context.** Case Detail (ARCHITECTURE.md section 4.6) needs full judgment text to render, and `/qa/extract` and `/summarize` both already accept a `case_id` on the assumption the backend can resolve it to a document - section 6 never specifies how a client obtains that text in the first place. Building Search → Case Detail exposed the gap directly: there was no route to fetch what Search's own results pointed at.
+
+**Decision.** Add `GET /api/v1/case/{case_id}` returning title, court, year, case number, IPC sections, full text, and the extractive summary with its sentence provenance. Purely additive - no existing route, schema, or client changes. `qa.py` and `summarize.py` now resolve `case_id` against the same fixture (`app/fixtures/cases.json`) that this endpoint serves, so a search result, its case detail, its QA answers, and its summary are all internally consistent for the same two demo cases.
+
+**Consequences.** ARCHITECTURE.md section 6 is now incomplete as written; the addition is documented here rather than silently expanding the spec. Phase 9 needs a real `case_id -> document` resolution path in the retrieval/storage layer, not just in a fixture file - this is now a stated requirement for that phase, not an assumption.

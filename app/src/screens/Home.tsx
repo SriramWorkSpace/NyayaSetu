@@ -7,6 +7,8 @@ import { PaperPanel } from '@/components/ui/paper-panel'
 import { FloatingCard } from '@/components/ui/floating-card'
 import { StampBadge } from '@/components/ui/stamp-badge'
 import { EmptyState, ErrorState, SkeletonBlock } from '@/components/ui/states'
+import { ListRow } from '@/components/ui/list-row'
+import { useAppStore } from '@/lib/store'
 
 const QUICK_ACTIONS = [
   { to: '/app/predict', label: 'Predict Bail', body: 'Structured case facts to a calibrated outcome.', icon: Gavel },
@@ -16,6 +18,8 @@ const QUICK_ACTIONS = [
 
 export function Home() {
   const navigate = useNavigate()
+  const activity = useAppStore((s) => s.activity)
+  const mostRecent = activity[0]
 
   // The real round trip: this screen's stat strip renders whatever the
   // backend actually reports, live, over the typed client. Nothing here is
@@ -78,14 +82,28 @@ export function Home() {
               <span className="text-caption uppercase tracking-[0.05em] text-ink-subtle">
                 Most recent activity
               </span>
-              <p className="max-w-[46ch] text-body text-ink-muted">
-                Nothing has been run yet. Predict an outcome or scan a document, and the result
-                appears here with its confidence.
-              </p>
+              {mostRecent ? (
+                <p className="max-w-[46ch] text-body text-ink-muted">
+                  {mostRecent.kind === 'bail'
+                    ? `Bail prediction for a ${mostRecent.request.crime_category.toLowerCase()} case, ${new Date(mostRecent.at).toLocaleString()}.`
+                    : `Document scan (${mostRecent.fileName}), ${new Date(mostRecent.at).toLocaleString()}.`}
+                </p>
+              ) : (
+                <p className="max-w-[46ch] text-body text-ink-muted">
+                  Nothing has been run yet. Predict an outcome or scan a document, and the result
+                  appears here with its confidence.
+                </p>
+              )}
             </div>
-            <StampBadge tone="neutral" size="lg">
-              No record
-            </StampBadge>
+            {mostRecent && mostRecent.kind === 'bail' ? (
+              <StampBadge tone={mostRecent.response.outcome === 'granted' ? 'granted' : 'denied'} size="lg">
+                {`Bail ${mostRecent.response.outcome}`}
+              </StampBadge>
+            ) : (
+              <StampBadge tone="neutral" size="lg">
+                {mostRecent ? 'Scanned' : 'No record'}
+              </StampBadge>
+            )}
           </div>
         </PaperPanel>
       )}
@@ -102,12 +120,29 @@ export function Home() {
         ))}
       </div>
 
-      <FloatingCard className="p-2">
-        <EmptyState
-          title="No activity yet"
-          body="Runs are recorded here as you make them, newest first, each with the model that produced it."
-        />
-      </FloatingCard>
+      {activity.length === 0 ? (
+        <FloatingCard className="p-2">
+          <EmptyState
+            title="No activity yet"
+            body="Runs are recorded here as you make them, newest first, each with the model that produced it."
+          />
+        </FloatingCard>
+      ) : (
+        <FloatingCard className="px-4">
+          {activity.slice(0, 5).map((a) => (
+            <ListRow
+              key={a.id}
+              title={a.kind === 'bail' ? `Bail: ${a.request.crime_category}` : `Scan: ${a.fileName}`}
+              subtitle={new Date(a.at).toLocaleString()}
+              value={
+                a.kind === 'bail'
+                  ? `${a.response.outcome} · ${(a.response.probability * 100).toFixed(0)}%`
+                  : `${Math.round(a.response.ocr_confidence * 100)}%`
+              }
+            />
+          ))}
+        </FloatingCard>
+      )}
     </>
   )
 }

@@ -19,7 +19,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routers import bail, health, metrics, qa, scan, search, summarize
+from app.routers import bail, case, health, metrics, qa, scan, search, summarize
 from app.schemas.envelope import fail
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -84,6 +84,7 @@ app.include_router(summarize.router, prefix=API_PREFIX)
 app.include_router(scan.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)
 app.include_router(metrics.router, prefix=API_PREFIX)
+app.include_router(case.router, prefix=API_PREFIX)
 
 
 @app.on_event("startup")

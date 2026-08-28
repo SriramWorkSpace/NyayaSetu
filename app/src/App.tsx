@@ -5,7 +5,7 @@ import { Shell } from '@/screens/Shell'
 import { Startup } from '@/screens/Startup'
 import { Home } from '@/screens/Home'
 import { Sandbox } from '@/screens/Sandbox'
-import { CaseLibrary, Insights, Predict, Scan, SearchPrecedent } from '@/screens'
+import { CaseDetail, CaseLibrary, Insights, Predict, Scan, SearchPrecedent } from '@/screens'
 
 export function App() {
   return (
@@ -20,6 +20,7 @@ export function App() {
             <Route path="scan" element={<Scan />} />
             <Route path="search" element={<SearchPrecedent />} />
             <Route path="library" element={<CaseLibrary />} />
+            <Route path="case/:caseId" element={<CaseDetail />} />
             <Route path="insights" element={<Insights />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

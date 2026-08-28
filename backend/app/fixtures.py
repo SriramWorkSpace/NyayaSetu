@@ -44,3 +44,7 @@ def search_results() -> dict[str, Any]:
 
 def metrics_for(module: str) -> dict[str, Any] | None:
     return _load("metrics").get(module)
+
+
+def case_detail(case_id: str) -> dict[str, Any] | None:
+    return _load("cases").get(case_id)

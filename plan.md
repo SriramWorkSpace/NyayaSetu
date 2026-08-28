@@ -11,7 +11,7 @@
 | 1 | Design system & component library | ✅ complete |
 | 2 | Shell, startup page, navigation | ✅ complete |
 | 3 | Contract stub backend | ✅ complete |
-| 4 | Screens | ⬜ not started |
+| 4 | Screens | ✅ complete |
 | 5 | Tauri shell | ⬜ not started |
 | 6 | Data & bail baselines | ⬜ not started |
 | 7 | Core models | ⬜ not started |

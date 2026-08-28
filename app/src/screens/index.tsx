@@ -1,55 +1,84 @@
+import { useNavigate } from 'react-router-dom'
+import { Gavel, ScanLine, Library, Trash2 } from 'lucide-react'
+import { useAppStore } from '@/lib/store'
+import { ScreenHeader } from '@/components/feature/screen-header'
+import { FloatingCard } from '@/components/ui/floating-card'
+import { ListRow } from '@/components/ui/list-row'
+import { EmptyState } from '@/components/ui/states'
+import { IconButton } from '@/components/ui/button'
 import { PlaceholderScreen } from './Placeholder'
 
+export { Predict } from './Predict'
+export { Scan } from './Scan'
+export { SearchPrecedent } from './Search'
+export { CaseDetail } from './CaseDetail'
+
 /**
- * Phase 2 screen shells. Each carries its real header, stats strip and empty
- * state; the working content lands in Phase 4 against the API contract.
+ * Saved cases and activity history, both from the session store
+ * (decisions.md D-012 - Zustand + localStorage, not SQLite, for a
+ * single-user local app).
  */
-
-export function Predict() {
-  return (
-    <PlaceholderScreen
-      title="Predict Bail"
-      subtitle="Structured case facts"
-      stats={[{ label: 'Model', value: 'not loaded' }, { label: 'Baseline', value: 'not loaded' }]}
-      emptyTitle="The prediction form lands in Phase 4"
-      emptyBody="Crime category, IPC sections, custody duration and prior record, then a result panel with the probability, its SHAP factors and a live baseline comparison."
-    />
-  )
-}
-
-export function Scan() {
-  return (
-    <PlaceholderScreen
-      title="Scan Document"
-      subtitle="Camera capture and field extraction"
-      stats={[{ label: 'OCR', value: 'not loaded' }, { label: 'NER', value: 'not loaded' }]}
-      emptyTitle="Capture arrives in Phase 4"
-      emptyBody="A document-edge frame over the camera, then extracted fields with per-field confidence. OCR error and extraction error are reported separately, always."
-    />
-  )
-}
-
-export function SearchPrecedent() {
-  return (
-    <PlaceholderScreen
-      title="Search Precedent"
-      subtitle="Natural language over past judgments"
-      stats={[{ label: 'Index', value: 'not built' }, { label: 'Corpus', value: '0' }]}
-      emptyTitle="Retrieval arrives in Phase 4"
-      emptyBody="A query returns ranked judgments with their real similarity scores, not just rank order. The FAISS index is built in Phase 7."
-    />
-  )
-}
-
 export function CaseLibrary() {
+  const navigate = useNavigate()
+  const activity = useAppStore((s) => s.activity)
+  const savedCases = useAppStore((s) => s.savedCases)
+  const unsaveCase = useAppStore((s) => s.unsaveCase)
+
   return (
-    <PlaceholderScreen
-      title="Case Library"
-      subtitle="Saved cases and scan history"
-      stats={[{ label: 'Saved', value: '0' }, { label: 'Scans', value: '0' }]}
-      emptyTitle="Nothing saved yet"
-      emptyBody="Predictions and scans you keep are collected here. Whether this survives an app restart is still open, and is settled in Phase 4."
-    />
+    <>
+      <ScreenHeader
+        title="Case Library"
+        subtitle="Saved cases and activity history"
+        stats={[{ label: 'Saved', value: String(savedCases.length) }, { label: 'Activity', value: String(activity.length) }]}
+      />
+
+      <div className="mb-6 flex flex-col gap-3">
+        <span className="text-caption uppercase tracking-[0.05em] text-ink-subtle">Saved cases</span>
+        {savedCases.length === 0 ? (
+          <FloatingCard className="p-2">
+            <EmptyState title="Nothing saved yet" body="Save a case from its detail view to find it here later." />
+          </FloatingCard>
+        ) : (
+          <FloatingCard className="px-4">
+            {savedCases.map((c) => (
+              <div key={c.caseId} className="flex items-center gap-2 border-b border-rule last:border-b-0">
+                <ListRow
+                  className="flex-1 border-b-0"
+                  icon={<Library size={16} strokeWidth={1.5} />}
+                  title={c.title}
+                  subtitle={`${c.court} · ${c.year}`}
+                  onClick={() => navigate(`/app/case/${c.caseId}`)}
+                />
+                <IconButton label="Remove from library" onClick={() => unsaveCase(c.caseId)}>
+                  <Trash2 size={14} strokeWidth={1.5} />
+                </IconButton>
+              </div>
+            ))}
+          </FloatingCard>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <span className="text-caption uppercase tracking-[0.05em] text-ink-subtle">Activity</span>
+        {activity.length === 0 ? (
+          <FloatingCard className="p-2">
+            <EmptyState title="No activity yet" body="Predictions and scans you run are recorded here, newest first." />
+          </FloatingCard>
+        ) : (
+          <FloatingCard className="px-4">
+            {activity.map((a) => (
+              <ListRow
+                key={a.id}
+                icon={a.kind === 'bail' ? <Gavel size={16} strokeWidth={1.5} /> : <ScanLine size={16} strokeWidth={1.5} />}
+                title={a.kind === 'bail' ? `Bail: ${a.request.crime_category}` : `Scan: ${a.fileName}`}
+                subtitle={new Date(a.at).toLocaleString()}
+                value={a.kind === 'bail' ? `${a.response.outcome} · ${(a.response.probability * 100).toFixed(0)}%` : `${Math.round(a.response.ocr_confidence * 100)}%`}
+              />
+            ))}
+          </FloatingCard>
+        )}
+      </div>
+    </>
   )
 }
 

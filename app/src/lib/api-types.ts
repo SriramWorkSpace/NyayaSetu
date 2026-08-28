@@ -140,3 +140,18 @@ export interface HealthResponse {
   models_loaded: string[]
   uptime_s: number
 }
+
+// ---- Case detail -----------------------------------------------------------
+// Not in ARCHITECTURE.md section 6 - an additive endpoint. See decisions.md D-013.
+
+export interface CaseDetail {
+  case_id: string
+  title: string
+  court: string
+  year: number
+  case_number: string
+  ipc_sections: string[]
+  full_text: string
+  summary_sentences: string[]
+  source_indices: number[]
+}

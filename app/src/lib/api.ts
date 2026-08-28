@@ -13,6 +13,7 @@ import type {
   BailPredictResponse,
   Envelope,
   HealthResponse,
+  CaseDetail,
   MetricModule,
   ModuleMetrics,
   QaExtractRequest,
@@ -120,4 +121,6 @@ export const api = {
   },
 
   metrics: (module: MetricModule) => request<ModuleMetrics>(`/metrics/${module}`, { method: 'GET' }),
+
+  caseDetail: (caseId: string) => request<CaseDetail>(`/case/${caseId}`, { method: 'GET' }),
 }
