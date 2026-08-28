@@ -1,0 +1,26 @@
+{
+  "baseline": [
+    {
+      "metric_name": "exact_match",
+      "value": 0.5889
+    },
+    {
+      "metric_name": "f1",
+      "value": 0.6604
+    }
+  ],
+  "final": [
+    {
+      "metric_name": "exact_match",
+      "value": 0.6481
+    },
+    {
+      "metric_name": "f1",
+      "value": 0.7393
+    }
+  ],
+  "calibration_points": null,
+  "fairness": null,
+  "dataset_size": 1369,
+  "last_trained": "2026-08-28T17:25:04.116346+00:00"
+}

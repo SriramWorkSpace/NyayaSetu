@@ -1,6 +1,6 @@
 # Model card — Bail Outcome Prediction
 
-**Module:** `bail` · **Version:** Phase 6 baselines (LogReg → XGBoost). InLegalBERT fusion is Phase 7; the fairness audit is Phase 8.
+**Module:** `bail` · **Version:** Phase 7, full three-tier progression — LogReg → XGBoost (structured + TF-IDF) → InLegalBERT-fused (ARCHITECTURE.md section 7). The fairness audit is Phase 8.
 
 ## Data
 
@@ -29,26 +29,36 @@
 
 32% of records (384/1,200) have `facts` text that co-occurs "bail" with an outcome word (granted/rejected/cancelled/denied/allowed). Manual review found this is a mix of legitimate prior-proceeding history ("previously denied bail... the High Court reversed this" — real, usable context) and, in some records, language that plainly narrates *this* judgment's own conclusion inside the fact recitation. A reliable automatic separation of the two was judged out of scope for a Phase 6 baseline (see `bail_audit.md` for the reasoning). Rather than hide this behind one score:
 
+> **Numbers below are post-correction.** Phase 7 found that `legal_issues` is a proper list in only ~2% of records — 98% store it as a single string, which the feature code originally used to build this table silently treated as empty text rather than erroring. All three tiers below use the corrected text pipeline (decisions.md D-025).
+
+## The full three-tier comparison
+
+"Fused" means frozen InLegalBERT embeddings (mean-pooled over `facts + legal_issues`) concatenated with the same structured features, feeding an XGBoost head — not full end-to-end fine-tuning of the transformer jointly with the tabular data. That would need a custom training loop and materially more compute; the QA module does that genuine end-to-end fine-tuning instead, where the task structurally requires a trained head. For bail, frozen-embedding fusion is a legitimate technique on its own merits, and was benchmarked as CPU-feasible (~428ms/doc, under 10 minutes for 1,198 documents) before being chosen.
+
 | Model | Features | F1 | PR-AUC |
 |---|---|---|---|
-| Baseline — Logistic Regression | full (structured + text) | 0.7709 | 0.8552 |
-| **Final — XGBoost** | **full (structured + text)** | **0.8117** | **0.8979** |
-| Ablation — XGBoost | structured only, no `facts`/`legal_issues` text | 0.7718 | 0.8237 |
+| Baseline — Logistic Regression | structured + TF-IDF | 0.7810 | 0.8868 |
+| XGBoost + TF-IDF | structured + TF-IDF | 0.8207 | **0.9331** |
+| **Final — InLegalBERT-fused** | **structured + frozen InLegalBERT embeddings** | **0.8258** | 0.8948 |
+| *(Ablation)* — XGBoost | structured only, no text at all | 0.7718 | 0.8237 |
 
-The ~4-point F1 gap between the structured-only ablation and the full model is the honest number to read skeptically: some of it is real signal (case complexity, factual detail), and some of it may be the disclosed hindsight-framing risk above. Neither the baseline/final comparison nor the Insights screen should be read as claiming this gap is 100% legitimate signal.
+**This is not a clean win for the fused tier, reported honestly rather than rounded up to a good story.** F1 improves marginally over XGBoost+TF-IDF (+0.0051), but **PR-AUC is actually worse** (0.9331 → 0.8948) — a real regression on that metric, not noise dismissed away. The likely explanation mirrors the retrieval module's finding (`MODEL_CARD_retrieval.md`): frozen, mean-pooled InLegalBERT embeddings average an entire document into one vector, which can lose exact discriminative signal — a specific IPC-section mention, a specific phrase — that TF-IDF captures directly and losslessly. On a corpus this small (958 training examples), a sharp lexical representation can match or beat a generic pretrained embedding that was never fine-tuned for this task. Fine-tuning InLegalBERT end-to-end (not just its frozen embeddings) might change this; not attempted here given the CPU-only time budget.
+
+The ~4-point F1 gap between the structured-only ablation and the full-text models (any tier) is the number to read skeptically regardless of which tier: some of it is real signal, some of it may be the disclosed hindsight-framing risk in `facts` (see below).
 
 ## Evaluation
 
-Held-out test split (240 records, never touched during training or feature-fitting — the `OneHotEncoder`, `MultiLabelBinarizer`, and `TfidfVectorizer` are all fit on train only and applied to test via `.transform()`).
+Held-out test split (240 records, never touched during training or feature-fitting — every encoder/vectorizer is fit on train only and applied to test via `.transform()`), identical across all three tiers for a clean comparison.
 
-**Calibration** (XGBoost, quantile-binned, 5 bins): predicted vs. observed probability tracks closely across the range (e.g., predicted 0.86 → observed 0.812; predicted 0.96 → observed 0.979) — see `bail.json`'s `calibration_points` for the exact numbers the Insights screen reads.
+**Calibration** (InLegalBERT-fused, the final tier; quantile-binned, 5 bins): predicted vs. observed tracks reasonably but less tightly than the earlier XGBoost+TF-IDF tier did — e.g. predicted 0.5 → observed 0.375, predicted 0.90 → observed 0.792. Worth noting alongside the PR-AUC regression above: this tier's probability estimates are somewhat less reliable, not just its ranking metric. See `bail.json`'s `calibration_points` for the exact numbers the Insights screen reads.
 
 **Fairness:** not yet run. `bail.json`'s `fairness` field is `null` until Phase 8.
 
 ## Limitations
 
 1. No custody-duration data exists in the source corpus — a genuine data gap, stated plainly rather than papered over with a form field the model can't use (see above).
-2. Residual hindsight-framing risk in `facts` text, disclosed with a number rather than fixed (see above).
-3. 1,198 records is a small corpus for a 3,000-feature TF-IDF vocabulary; the model likely overfits to phrasing idiosyncratic to this specific set of judgments rather than generalizing broadly.
+2. Residual hindsight-framing risk in `facts` text, disclosed with a number rather than fixed (see the audit doc for the full reasoning).
+3. 1,198 records is a small corpus; the fused tier's underperformance on PR-AUC relative to TF-IDF may partly reflect this — a generic embedding has less to work with on so little data compared to a sharp, corpus-specific TF-IDF vocabulary.
 4. Source judgments are High Court / Supreme Court appellate decisions on bail applications and cancellations — not trial-court first-instance bail hearings, which are the more common real-world use case this tool's UI implies.
 5. `accused_gender` is excluded from training by design (see above), but this does not guarantee the model is free of gender-correlated bias learned through proxies (crime type, court, region-adjacent signals) — that is exactly what Phase 8 exists to measure, not something this card can claim in advance.
+6. The "final" tier is not unambiguously the best tier on every metric (see the table above) — a real, disclosed finding, not a naming inconsistency. Whichever tier Phase 9 actually serves should be a deliberate choice made with this table in hand, not an assumption that "final" always means "best."

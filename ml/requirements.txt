@@ -1,6 +1,8 @@
 # ml/ writes; backend/ only reads (CLAUDE.md section 2). This venv is
 # separate from backend/.venv: ml/ needs data-fetching and training
 # tooling backend/ never needs for serving.
+
+# Phase 6 — data and bail baselines
 pandas
 numpy
 scikit-learn
@@ -9,3 +11,12 @@ datasets
 huggingface_hub
 joblib
 pyarrow
+
+# Phase 7 — core models
+spacy                 # NER (decisions.md D-018: default, no InLegalBERT benchmark gate)
+rouge-score           # summarization oracle labels + evaluation
+networkx              # TextRank baseline (PageRank over a TF-IDF sentence graph)
+torch --index-url https://download.pytorch.org/whl/cpu   # CPU-only wheel
+transformers          # InLegalBERT (QA fine-tune, bail fusion embeddings)
+sentence-transformers # MiniLM (QA gold-span labeling, retrieval baseline)
+faiss-cpu             # precedent retrieval index

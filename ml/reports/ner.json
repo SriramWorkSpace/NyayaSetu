@@ -1,0 +1,50 @@
+{
+  "baseline": [
+    {
+      "metric_name": "entity_f1",
+      "value": 0.974
+    },
+    {
+      "metric_name": "entity_f1_court",
+      "value": 1.0
+    },
+    {
+      "metric_name": "entity_f1_party",
+      "value": 1.0
+    },
+    {
+      "metric_name": "entity_f1_date",
+      "value": 0.9524
+    },
+    {
+      "metric_name": "entity_f1_ipc_section",
+      "value": 0.9599
+    }
+  ],
+  "final": [
+    {
+      "metric_name": "entity_f1",
+      "value": 0.9976
+    },
+    {
+      "metric_name": "entity_f1_court",
+      "value": 1.0
+    },
+    {
+      "metric_name": "entity_f1_party",
+      "value": 1.0
+    },
+    {
+      "metric_name": "entity_f1_date",
+      "value": 1.0
+    },
+    {
+      "metric_name": "entity_f1_ipc_section",
+      "value": 0.9953
+    }
+  ],
+  "calibration_points": null,
+  "fairness": null,
+  "dataset_size": 1200,
+  "last_trained": "2026-08-28T10:54:20.288752+00:00"
+}

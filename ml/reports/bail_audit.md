@@ -14,6 +14,14 @@ The dataset's real schema differs from what ARCHITECTURE.md's `BailPredictReques
 
 **Also related, noted but not fixed now (scope discipline — the fix above was reactive, this would be additive):** the trained model includes `bail_type` (Regular/Anticipatory/Interim) as a structured feature, but the Predict Bail form never collects it — at inference it falls back to the encoder's `fillna("Unknown")` path, same as any unseen category. Adding a `bail_type` selector to the form is a reasonable Phase 9 follow-up, not done here since it's new scope rather than a correction of something already broken.
 
+## Retroactive correction, found in Phase 7
+
+**`legal_issues` is a proper list in only ~2% of records (21/1,200).** The small sample checked below (and the `sample.json` dump) happened to fall entirely within that 2% - every example in this document's original write-up showed a clean 3-item list, which is not representative of the corpus. In the other **98% (1,179/1,200)**, the field is a single string (occasionally with 1-2 semicolon-separated sub-issues). Found while building Phase 7's QA training data, via a sanity check that caught an exploded example count.
+
+This matters retroactively: Phase 6's `build_text_features()` used `" ".join(x) if isinstance(x, list) else ""` on this field - a defensive guard that never crashed, but silently contributed **zero `legal_issues` text to the bail model's features for 98% of training rows**, for the entire duration of Phase 6, with no error or warning. Fixed in `train_bail.py` via `normalize_legal_issues()`; Phase 6's bail baseline and final models were retrained with the corrected text pipeline (decisions.md D-025). Both improved: baseline F1 0.7709 → 0.7810, final F1 0.8117 → 0.8207. See the updated `MODEL_CARD_bail.md`.
+
+**The lesson for future audits of this dataset (and generally):** checking `isinstance(records[0][field], list)` on a handful of early records is not the same as checking it across the full corpus. A field that "looks like a list" in a spot check can have a completely different shape in the bulk of the data.
+
 ## Distributions (n = 1,200 before dedup)
 
 | Field | Distribution |

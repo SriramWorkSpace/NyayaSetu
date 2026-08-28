@@ -14,7 +14,7 @@
 | 4 | Screens | ✅ complete |
 | 5 | Tauri shell | ✅ complete |
 | 6 | Data & bail baselines | ✅ complete |
-| 7 | Core models | ⬜ not started |
+| 7 | Core models | ✅ complete |
 | 8 | Fairness audit | ⬜ not started |
 | 9 | Real backend | ⬜ not started |
 | 10 | Model Insights & quality floor | ⬜ not started |

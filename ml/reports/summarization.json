@@ -1,0 +1,34 @@
+{
+  "baseline": [
+    {
+      "metric_name": "rouge1",
+      "value": 0.3258
+    },
+    {
+      "metric_name": "rouge2",
+      "value": 0.0961
+    },
+    {
+      "metric_name": "rougeL",
+      "value": 0.2158
+    }
+  ],
+  "final": [
+    {
+      "metric_name": "rouge1",
+      "value": 0.3377
+    },
+    {
+      "metric_name": "rouge2",
+      "value": 0.0994
+    },
+    {
+      "metric_name": "rougeL",
+      "value": 0.219
+    }
+  ],
+  "calibration_points": null,
+  "fairness": null,
+  "dataset_size": 1200,
+  "last_trained": "2026-08-28T10:52:44.219850+00:00"
+}

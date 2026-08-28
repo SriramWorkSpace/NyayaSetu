@@ -139,8 +139,26 @@ def build_structured_features(df: pd.DataFrame, ref_columns: dict | None = None)
     return structured, columns
 
 
+def normalize_legal_issues(value) -> list[str]:
+    """
+    ~98% of records store `legal_issues` as a single string (occasionally
+    with 1-2 semicolon-separated sub-issues), not the list of ~3 discrete
+    items a handful of more richly-annotated records have. Found in Phase 7
+    while building QA training data; retroactively fixed here too, since
+    `build_text_features` originally treated any non-list value as empty via
+    a defensive `isinstance` check - silently dropping this field's text for
+    98% of training rows without erroring (decisions.md D-025).
+    """
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if str(v).strip()]
+    if isinstance(value, str) and value.strip():
+        return [part.strip() for part in value.split(";") if part.strip()]
+    return []
+
+
 def build_text_features(df: pd.DataFrame, vectorizer: TfidfVectorizer | None = None):
-    text = (df["facts"].fillna("") + " " + df["legal_issues"].apply(lambda x: " ".join(x) if isinstance(x, list) else "")).tolist()
+    issues_text = df["legal_issues"].apply(lambda x: " ".join(normalize_legal_issues(x)))
+    text = (df["facts"].fillna("") + " " + issues_text).tolist()
     if vectorizer is None:
         vectorizer = TfidfVectorizer(max_features=3000, ngram_range=(1, 2), min_df=2)
         matrix = vectorizer.fit_transform(text)

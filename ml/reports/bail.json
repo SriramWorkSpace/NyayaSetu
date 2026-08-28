@@ -2,46 +2,54 @@
   "baseline": [
     {
       "metric_name": "f1",
-      "value": 0.7709
+      "value": 0.781
     },
     {
       "metric_name": "pr_auc",
-      "value": 0.8552
+      "value": 0.8868
+    },
+    {
+      "metric_name": "f1_xgboost_tfidf",
+      "value": 0.8207
+    },
+    {
+      "metric_name": "pr_auc_xgboost_tfidf",
+      "value": 0.9331
     }
   ],
   "final": [
     {
       "metric_name": "f1",
-      "value": 0.8117
+      "value": 0.8258
     },
     {
       "metric_name": "pr_auc",
-      "value": 0.8979
+      "value": 0.8948
     }
   ],
   "calibration_points": [
     {
-      "predicted": 0.22,
-      "observed": 0.229
+      "predicted": 0.175,
+      "observed": 0.146
     },
     {
-      "predicted": 0.446,
-      "observed": 0.396
+      "predicted": 0.5,
+      "observed": 0.375
     },
     {
-      "predicted": 0.656,
-      "observed": 0.646
+      "predicted": 0.762,
+      "observed": 0.792
     },
     {
-      "predicted": 0.86,
-      "observed": 0.812
+      "predicted": 0.902,
+      "observed": 0.792
     },
     {
-      "predicted": 0.959,
-      "observed": 0.979
+      "predicted": 0.977,
+      "observed": 0.958
     }
   ],
   "fairness": null,
   "dataset_size": 1198,
-  "last_trained": "2026-08-28T09:02:48.002621+00:00"
+  "last_trained": "2026-08-28T18:45:31.132839+00:00"
 }

@@ -264,3 +264,75 @@ Its *interaction* — click → heading lifts away → arrow flies off → a sec
 **Decision.** Confirmed as-is; no change. Rationale (user's, endorsing D-015): a regex "fix" that doesn't actually address the leakage but makes the number look cleaner is a worse outcome than an honestly disclosed, quantified risk — the kind of thing that looks bad if discovered later and undisclosed, and looks rigorous if flagged upfront. Framed as a genuine strength of the project's methodology, not a weakness to minimize.
 
 **Consequences.** None — `MODEL_CARD_bail.md`'s existing disclosure stands. Recorded here only so the confirmation itself is part of the decision trail, not just the original call.
+
+---
+
+## D-022 · QA and retrieval sourced via ungated ILDC mirrors, not the gated official IL-TUR
+**2026-08-28 · accepted**
+
+**Context.** The sourcing brief's plan for QA (56-doc expert split with gold spans) and retrieval (35K judgments) both pointed at `Exploration-Lab/IL-TUR` on Hugging Face. That repo is gated - it requires a human to manually request and be granted access on a specific HF account, which this session cannot do on the user's behalf. The `pcr/` (precedent case retrieval) config, which would have given real query-candidate relevance pairs for retrieval evaluation, is only available there.
+
+**Decision.** Sourced the underlying ILDC data through two community-uploaded, ungated mirrors instead: `jayadityagandham9/ILDC_35k_COMPLETE` (38,904 rows, real Supreme Court judgment text - this is the retrieval corpus) and `anuragiiser/ILDC_expert` (54 rows - inspected and found to be a *human evaluation* dataset comparing model-generated explanations to official reasoning, not (question, answer_span) training data, so **not used** for QA; see the QA sourcing note below). The original data's license terms (academic research only, no commercial use, per the CJPE GitHub repo's stated terms) are treated as still binding regardless of the mirror's own missing license metadata - a re-upload does not change the underlying data's terms.
+
+**Consequences.** Retrieval proceeds on real judgment text via the ungated mirror. QA does not use IL-TUR at all - see D-023. `README.md`'s dataset table needs a note that IL-TUR access in practice went through community mirrors of the same corpus, not the official gated repo, with the same non-commercial restriction carried forward. Revisit only if the user later obtains their own HF access grant to the official gated repo and wants to switch to `pcr/`'s real relevance judgments for a more rigorous retrieval evaluation than the self-retrieval proxy this project uses instead (see `MODEL_CARD_retrieval.md`).
+
+---
+
+## D-023 · QA training data comes from IndianBailJudgments-1200, not IL-TUR
+**2026-08-28 · accepted**
+
+**Context.** With the intended IL-TUR QA source gated (D-022) and its community mirror turning out to be the wrong kind of dataset entirely (human evaluation of generated explanations, not span-annotated Q&A), a different QA training source was needed. IndianBailJudgments-1200 - already fetched, audited, and understood from Phase 6 - turned out to already have the right shape, unused until now: `legal_issues` is a list of ~3 genuine questions per record ("Whether fresh bail is needed when new, more serious penal sections are added"), and `judgment_reason` is the court's answer to them.
+
+**Decision.** Build QA training examples from `legal_issues` (question) and `facts + judgment_reason` (context), 1,200 records x ~3 questions each - more examples than the 56-document expert split would have given, and on data this project already has full audit provenance for.
+
+Real answer-span ground truth still does not exist, so a distant-supervision heuristic is used - and a real circularity risk was caught before training started: using the *same* similarity method to both generate "gold" spans and serve as the "baseline" would make the baseline score ~100% by construction, proving nothing. The fix: gold spans are located via semantic embedding similarity (sentence-transformers MiniLM), the baseline uses bare lexical TF-IDF (a genuinely different, independent signal), and both are scored against the same gold - so the comparison is real rather than circular.
+
+**Consequences.** `MODEL_CARD_qa.md` must state plainly that answer spans are a semantic-similarity proxy, not hand-verified ground truth, and that questions come from a legal-issue phrasing convention ("Whether X...") rather than natural conversational phrasing a real user might type - a genuine limitation for the product's actual "ask a question" UI, worth testing against real user phrasing later.
+
+---
+
+## D-024 · NER's near-perfect baseline reveals the synthetic benchmark's ceiling, not a solved task
+**2026-08-28 · accepted**
+
+**Context.** The NER regex baseline (deliberately designed to use only positional/format heuristics, with no lookup of known field values) scored COURT and PARTY at exactly F1 1.0, and DATE/IPC_SECTION above 0.95, on the synthetic-document test split (`train_ner.py`, `MODEL_CARD_ner.md`). A near-perfect "blind" baseline is a signal worth stopping on, not a result to report proudly without examining it.
+
+**Decision.** Diagnosed rather than accepted at face value: the synthetic document-assembly method (necessary in the first place because no real OCR'd text with entity positions exists - see the model card) places every field on a fixed, identical line position across all 1,200 documents. A positional heuristic ("line 1 is the court") is therefore correct by construction, not because the regex is genuinely good at extraction. This was documented prominently in `MODEL_CARD_ner.md` as the primary caveat on the whole module, not buried in a limitations list: **the near-perfect scores validate that the training pipeline works end to end, not that document NER is solved for this product.**
+
+**Consequences.** The real test of this pipeline is Phase 9, against actual OCR'd text from the corpus's 1,200 source PDFs, where header format will vary by court, year, and OCR quality in ways this synthetic benchmark cannot reveal. If a more meaningful pre-Phase-9 benchmark is wanted later, varying the synthetic template (randomized field order, injected OCR-like noise) would make the regex baseline genuinely blind again - flagged as a possible improvement, not done now, since the honest disclosure already in the model card serves the same purpose without the extra engineering.
+
+---
+
+## D-025 · `legal_issues` field type inconsistency found and fixed, Phase 6 bail model retrained
+**2026-08-28 · accepted**
+
+**Context.** Building QA training data (D-023) surfaced a genuine data-quality issue in IndianBailJudgments-1200 that Phase 6's audit missed: `legal_issues` is a proper JSON list of ~3 discrete questions in only ~2% of records (21/1200) - the small sample checked during Phase 6. In the other **98% of records (1,179/1,200)**, the field is a single string (occasionally with 1-2 semicolon-separated sub-issues). Caught by a sanity check on example counts (expected ~1,400 QA training examples, got 151,498) - a naive `for question in record["legal_issues"]` iterates a string character by character, exploding one record into ~150 garbage single-character "questions."
+
+Phase 6's `build_text_features()` had a *different*, quieter symptom of the same root issue: `df["legal_issues"].apply(lambda x: " ".join(x) if isinstance(x, list) else "")` defensively fell back to an empty string for non-list values - never crashed, never warned, just silently contributed **zero legal_issues text to the bail model's TF-IDF features for 98% of training rows**, for the entire duration of Phase 6.
+
+**Decision.** Added `normalize_legal_issues()` to `train_bail.py` (the shared module `train_qa.py` and `train_bail_fusion.py` both import it from) - handles the list case as before, splits the string case on `;`, treats a bare string with no semicolon as one item. **Phase 6's bail baseline and final models were retrained** with the fix, since the fusion tier (about to be trained in the same phase) needed a consistent, non-buggy text pipeline to compare against - training three tiers where one used complete text and two used silently-truncated text would have made the three-way comparison invalid.
+
+**Consequences.** `bail.json` and `MODEL_CARD_bail.md` updated with the retrained numbers: baseline (LogReg) F1 0.7709 → **0.7810**, PR-AUC 0.8552 → **0.8868**; final (XGBoost+TF-IDF) F1 0.8117 → **0.8207**, PR-AUC 0.8979 → **0.9331** - both genuinely improved once the model could actually see the text it was supposed to be trained on. The structured-only ablation (D-015) is unaffected, since it never used text features. `bail_audit.md` updated with this finding as a retroactive correction to Phase 6's own audit - a reminder that a defensive `isinstance` guard prevents a crash, not a silent data-quality bug, and the two are easy to mistake for each other when the code "just works."
+
+---
+
+## D-026 · Retrieval comparison had a scale-mismatch bug, caught twice, fixed on the third attempt - and InLegalBERT lost
+**2026-08-28 · accepted**
+
+**Context.** The first retrieval evaluation scored MiniLM on the full 82,444-chunk corpus but InLegalBERT on a smaller 1,500-chunk subset (chosen only to keep InLegalBERT's CPU embedding time reasonable). The result - InLegalBERT at MRR 1.0, Recall@5 1.0 - was too perfect to trust, and investigation confirmed why: in that small subset, 137 of 153 multi-chunk documents had *exactly* 2 chunks, meaning most eval queries just had to find one near-identical sibling chunk among 1,500 candidates - a far easier task than the baseline's 82,444-chunk search. Not a real result.
+
+**The first fix attempt was also wrong**, for a different reason: it tried to replay the original run's random-number sequence to recover the identical 1,500-chunk subset, but missed an earlier `rng.shuffle()` call in the pipeline (the corpus-capping step), so it silently compared MiniLM against a *different* random subset than InLegalBERT had actually been scored on. Caught immediately - only 2 of the intended 150 eval queries survived into that mismatched subset, a sample size that meant nothing on its own and was itself the tell that something upstream was still wrong.
+
+**Decision.** Abandoned RNG replay entirely. Built one well-defined evaluation set directly and deterministically: all 150 query documents with their full sibling-chunk sets guaranteed present, plus 800 distractor documents, for 8,149 chunks total - both models scored identically on this set via fresh embedding (InLegalBERT) and exact FAISS-index vector reconstruction (MiniLM, no re-embedding needed). Result, this time real: **MiniLM beats InLegalBERT** (MRR 0.309 vs 0.219, Precision@5 0.164 vs 0.085) - reported honestly per CLAUDE.md section 7's rule that a final model that doesn't beat its baseline is disclosed, not hidden.
+
+**Consequences.** `MODEL_CARD_retrieval.md` documents the full saga (both bugs, both fixes, the final valid number) rather than presenting only the clean final answer - the two false starts are as informative as the eventual result, since they are exactly the kind of scale-mismatch mistake this evaluation methodology is prone to. The production FAISS index ships with MiniLM, which is now confirmed to be both the practical choice (CPU throughput) and the empirically better one (this evaluation) - a stronger, more coherent justification than either fact alone. `train_retrieval.py`'s original comparison code is left as-is (documented as superseded, not deleted) with `fix_retrieval_eval.py` as the corrected follow-up; a future cleanup could merge the fix directly into the main script, not done here since the working numbers are already captured.
+
+---
+
+## D-027 · InLegalBERT-fused bail model is not an unambiguous win over XGBoost+TF-IDF
+**2026-08-28 · accepted**
+
+**Context.** The InLegalBERT-fused tier (frozen embeddings + structured features, XGBoost head) was expected to be the strongest bail tier, matching ARCHITECTURE.md section 7's stated progression. Measured against the identical held-out split as the other two tiers: F1 improved marginally over XGBoost+TF-IDF (0.8207 → 0.8258, +0.0051), but **PR-AUC regressed** (0.9331 → 0.8948) and calibration was measurably less tight.
+
+**Decision.** Reported as-is, not rounded up to "the final tier wins" - CLAUDE.md section 7's rule that a final model not beating its baseline is disclosed, not hidden, applies here even though F1 technically ticked up. The likely explanation, stated in `MODEL_CARD_bail.md`: frozen, mean-pooled InLegalBERT embeddings average an entire document into one vector, losing exact discriminative signal (a specific IPC section mention, a specific phrase) that TF-IDF captures directly - and on a small corpus (958 training examples), a sharp lexical representation can match or beat a generic pretrained embedding never fine-tuned for this task. This mirrors the retrieval module's own finding in the same phase (D-026) that raw InLegalBERT embeddings underperformed a purpose-built sentence encoder - a consistent pattern, not two unrelated coincidences.
+
+**Consequences.** Phase 9's real backend wiring must make a deliberate choice about which bail tier to actually serve, informed by this table - "final" does not automatically mean "best" here. `MODEL_CARD_bail.md`'s limitations section says this explicitly, so the choice cannot be made by default/inertia later. A genuine future improvement, if pursued, is end-to-end fine-tuning of InLegalBERT (not just frozen embeddings) - the QA module's training script (`train_qa.py`) is the working example of what that would look like for bail too, not attempted here given the CPU-only time budget for this phase.

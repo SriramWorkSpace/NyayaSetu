@@ -1,0 +1,48 @@
+{
+  "baseline": [
+    {
+      "metric_name": "precision_at_5",
+      "value": 0.3
+    },
+    {
+      "metric_name": "recall_at_5",
+      "value": 0.15
+    },
+    {
+      "metric_name": "mrr",
+      "value": 0.5493
+    },
+    {
+      "metric_name": "minilm_at_comparison_scale_precision_at_5",
+      "value": 0.164
+    },
+    {
+      "metric_name": "minilm_at_comparison_scale_recall_at_5",
+      "value": 0.1242
+    },
+    {
+      "metric_name": "minilm_at_comparison_scale_mrr",
+      "value": 0.3091
+    }
+  ],
+  "final": [
+    {
+      "metric_name": "precision_at_5",
+      "value": 0.0853
+    },
+    {
+      "metric_name": "recall_at_5",
+      "value": 0.0692
+    },
+    {
+      "metric_name": "mrr",
+      "value": 0.2187
+    }
+  ],
+  "calibration_points": null,
+  "fairness": null,
+  "dataset_size": 10000,
+  "last_trained": "2026-08-28T18:06:55.987747+00:00",
+  "_comparison_scale_chunks": 8149,
+  "_comparison_scale_n_queries": 150
+}
