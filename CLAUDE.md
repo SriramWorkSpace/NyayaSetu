@@ -263,6 +263,21 @@ winget install UB-Mannheim.TesseractOCR
 # then confirm: tesseract --version
 ```
 
+### Verify the native Tauri window (not just the browser)
+
+Playwright drives browser contexts only - it cannot see into a native OS window.
+`app/src-tauri/scripts/verify-native-window.ps1` captures one directly via
+`PrintWindow`, which reads the window's own surface rather than desktop
+pixels - a plain screenshot is unreliable here because window z-order/focus
+can silently fail for an unattended automation process.
+
+```powershell
+tasklist /FI "IMAGENAME eq app.exe"                     # find the pid
+powershell -File app/src-tauri/scripts/verify-native-window.ps1 `
+  -ProcessId <pid> -OutPath out.png                      # capture as-is
+  -ClickX 965 -ClickY 730                                 # optionally click first
+```
+
 ### Add a shadcn primitive
 
 ```bash

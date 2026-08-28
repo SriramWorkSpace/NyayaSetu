@@ -12,7 +12,7 @@
 | 2 | Shell, startup page, navigation | ✅ complete |
 | 3 | Contract stub backend | ✅ complete |
 | 4 | Screens | ✅ complete |
-| 5 | Tauri shell | ⬜ not started |
+| 5 | Tauri shell | ✅ complete |
 | 6 | Data & bail baselines | ⬜ not started |
 | 7 | Core models | ⬜ not started |
 | 8 | Fairness audit | ⬜ not started |

@@ -43,3 +43,6 @@ Thumbs.db
 .pytest_cache/
 .ruff_cache/
 .ipynb_checkpoints/
+
+# Claude Code session artifacts - not project content
+.claude/
