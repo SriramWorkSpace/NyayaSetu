@@ -159,7 +159,7 @@ Left rail navigation (desktop convention, not a bottom tab bar), collapsible, ic
 Gradient panel (`aurora`) showing the most recent activity instead of a balance figure — last prediction or last scan, whichever is more recent. Below: three quick actions (Predict · Scan · Search) as equal-weight cards. Below that: a recent-activity list, each row an icon chip, title, subtitle, and right-aligned result value.
 
 ### 4.2 Predict Bail
-A grouped form, not a wall of fields: crime category (chip select), IPC sections (searchable multi-select with mono-styled chips), custody duration (stepper), prior record (toggle), optional case narrative (textarea). Sticky primary button opens the **Result panel**.
+A grouped form, not a wall of fields: crime category (chip select, the 12 categories actually present in the training corpus), IPC sections (searchable multi-select with mono-styled chips), prior record (three-way: yes / no / unknown — matching the real data, where "unknown" is 49% of records, not collapsible to a boolean), optional case narrative (textarea). No custody-duration field: the training corpus never collected it (decisions.md D-017). Sticky primary button opens the **Result panel**.
 
 ### 4.3 Result panel (bail)
 Gradient panel (`verdict`) with the outcome and probability in Display type. Below: `ConfidenceMeter`, then a horizontal bar chart of top SHAP factors (name, direction arrow, magnitude). Then a one-line calibration note pulled from `/metrics` (§2.2 #15). Then the **live baseline toggle** (§2.2 #13) — flipping it re-queries `/predict/bail/baseline` with the same inputs and shows both predictions stacked. Persistent disclaimer chip at the bottom.
@@ -256,10 +256,13 @@ Base: `http://localhost:8000/api/v1/*`. Every response: `{ ok, data, error, late
 
 ```
 POST /predict/bail
-  → { crime_category, ipc_sections[], custody_days, prior_record, narrative? }
+  → { crime_category, ipc_sections[], prior_record: "yes"|"no"|"unknown", narrative? }
   ← { outcome, probability, confidence_band,
       factors: [{ name, direction, weight }],     // SHAP
       model_version }
+  // custody_days removed (decisions.md D-017): the training corpus
+  // (IndianBailJudgments-1200) never collected it. prior_record is
+  // 3-state, not boolean - "unknown" is 49% of that corpus.
 
 POST /predict/bail/baseline        # for the §4.3 live toggle
   → same payload as above

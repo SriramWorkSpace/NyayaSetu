@@ -13,11 +13,16 @@ export interface Envelope<T> {
 
 // ---- Bail ------------------------------------------------------------
 
+/**
+ * custody_days was removed (decisions.md D-017): the training corpus never
+ * collected it, so the model provably never uses it - keeping it would be a
+ * dead form field. prior_record is a 3-state literal, not a boolean:
+ * "unknown" is 49% of the training data, not an edge case.
+ */
 export interface BailPredictRequest {
   crime_category: string
   ipc_sections: string[]
-  custody_days: number
-  prior_record: boolean
+  prior_record: 'yes' | 'no' | 'unknown'
   narrative?: string
 }
 

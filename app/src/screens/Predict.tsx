@@ -9,23 +9,35 @@ import { ScreenHeader } from '@/components/feature/screen-header'
 import { FloatingCard } from '@/components/ui/floating-card'
 import { Chip } from '@/components/ui/chip'
 import { IpcSectionPicker } from '@/components/feature/ipc-section-picker'
-import { Stepper } from '@/components/feature/stepper'
-import { SwitchField } from '@/components/ui/switch'
+import { SegmentedControl } from '@/components/ui/segmented-control'
 import { PrimaryButton } from '@/components/ui/button'
 import { ErrorState } from '@/components/ui/states'
 import { Sheet } from '@/components/ui/sheet'
 import { BailResultPanel } from '@/components/feature/bail-result-panel'
 import type { BailPredictResponse } from '@/lib/api-types'
 
+// The 12 categories actually present in the training corpus
+// (IndianBailJudgments-1200), not an invented list - a mismatch here means
+// every submission lands in the model's catch-all "Unknown" bucket
+// regardless of what the user picked (decisions.md D-017).
 const CRIME_CATEGORIES = [
-  'Theft', 'Assault', 'Economic offence', 'Narcotics', 'Cybercrime', 'Forgery', 'Other',
+  'Narcotics', 'Theft or Robbery', 'Dowry Harassment', 'Sexual Offense',
+  'Fraud or Cheating', 'Cyber Crime', 'Extortion', 'Kidnapping', 'Murder',
+  'Domestic Violence', 'Attempt to Murder', 'Others',
 ]
+
+const PRIOR_RECORD_OPTIONS = [
+  { value: 'unknown', label: 'Unknown' },
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+] as const
 
 const formSchema = z.object({
   crime_category: z.string().min(1, 'Choose a crime category.'),
   ipc_sections: z.array(z.string()).min(1, 'Add at least one IPC section.'),
-  custody_days: z.number().int().min(0).max(20000),
-  prior_record: z.boolean(),
+  // "unknown" is a real, selectable state, not a placeholder: it is 49% of
+  // the training corpus, not an edge case (decisions.md D-017).
+  prior_record: z.enum(['yes', 'no', 'unknown']),
   narrative: z.string().max(8000).optional(),
 })
 
@@ -38,7 +50,7 @@ export function Predict() {
 
   const { control, handleSubmit, watch, formState } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { crime_category: '', ipc_sections: [], custody_days: 30, prior_record: false, narrative: '' },
+    defaultValues: { crime_category: '', ipc_sections: [], prior_record: 'unknown', narrative: '' },
   })
 
   const mutation = useMutation({
@@ -106,27 +118,15 @@ export function Predict() {
             )}
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="custody" className="text-label text-ink">Custody duration</label>
-              <Controller
-                control={control}
-                name="custody_days"
-                render={({ field }) => (
-                  <Stepper id="custody" value={field.value} onChange={field.onChange} suffix="days" />
-                )}
-              />
-            </div>
-
-            <div className="flex flex-col justify-end gap-2">
-              <Controller
-                control={control}
-                name="prior_record"
-                render={({ field }) => (
-                  <SwitchField id="prior" label="Prior record" checked={field.value} onChange={field.onChange} />
-                )}
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-label text-ink">Prior record</label>
+            <Controller
+              control={control}
+              name="prior_record"
+              render={({ field }) => (
+                <SegmentedControl options={PRIOR_RECORD_OPTIONS} value={field.value} onChange={field.onChange} />
+              )}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -167,7 +167,7 @@ export function Predict() {
         <div className="sticky bottom-4 flex justify-end">
           <FloatingCard className="p-2">
             <PrimaryButton type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Running prediction…' : 'Run prediction'}
+              {mutation.isPending ? 'Running prediction...' : 'Run prediction'}
             </PrimaryButton>
           </FloatingCard>
         </div>

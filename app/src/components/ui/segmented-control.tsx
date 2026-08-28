@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 export interface SegmentedControlProps<T extends string> {
-  options: { value: T; label: string }[]
+  options: readonly { value: T; label: string }[]
   value: T
   onChange: (v: T) => void
   className?: string

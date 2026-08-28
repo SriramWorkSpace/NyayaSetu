@@ -19,7 +19,7 @@ const browser = await chromium.launch();
   const page = await ctx.newPage();
   await page.goto(BASE + '/app/predict', { waitUntil: 'networkidle' });
 
-  await page.getByText('Assault', { exact: true }).click();
+  await page.getByText('Murder', { exact: true }).click();
   await page.locator('#ipc').fill('302');
   await page.locator('#ipc').press('Enter');
   check('IPC chip added', await page.getByText('IPC 302').isVisible());
@@ -140,7 +140,7 @@ const browser = await chromium.launch();
   const page = await ctx.newPage();
   // Run one prediction first so there is activity to reflect.
   await page.goto(BASE + '/app/predict', { waitUntil: 'networkidle' });
-  await page.getByText('Theft', { exact: true }).click();
+  await page.getByText('Extortion', { exact: true }).click();
   await page.locator('#ipc').fill('379');
   await page.locator('#ipc').press('Enter');
   await page.getByRole('button', { name: 'Run prediction' }).click();
@@ -149,7 +149,7 @@ const browser = await chromium.launch();
 
   await page.goto(BASE + '/app', { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
-  const activityVisible = await page.getByText(/Bail: Theft/).isVisible().catch(() => false);
+  const activityVisible = await page.getByText(/Bail: Extortion/).isVisible().catch(() => false);
   check('Home activity list reflects a real prediction just made', activityVisible);
   await ctx.close();
 }

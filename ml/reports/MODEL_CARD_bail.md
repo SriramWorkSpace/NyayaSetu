@@ -8,7 +8,7 @@
 
 1,198 records after dropping 2 exact-duplicate-facts pairs found during the audit (`bail_audit.md`). Split 80/20 (958 train / 240 test), stratified on outcome, fixed `random_state=42`.
 
-**This corpus contains no custody-duration field.** The model does not use custody days as a feature. The API's `custody_days` field is accepted for schema forward-compatibility only — see `bail_audit.md` for the open item this creates ahead of Phase 9.
+**This corpus contains no custody-duration field, and never did.** The model does not use custody days as a feature — it never could. Rather than keep a form field the model provably ignores, `custody_days` was removed from the API contract entirely (decisions.md D-017). This is stated here as a known data gap, not hidden behind a field that quietly did nothing: if custody duration existed in the source data, it would plausibly be a real predictive signal, and its absence is a genuine limitation of this dataset, not an implementation oversight.
 
 ## Features
 
@@ -47,7 +47,7 @@ Held-out test split (240 records, never touched during training or feature-fitti
 
 ## Limitations
 
-1. No custody-duration data exists in the source corpus (see above).
+1. No custody-duration data exists in the source corpus — a genuine data gap, stated plainly rather than papered over with a form field the model can't use (see above).
 2. Residual hindsight-framing risk in `facts` text, disclosed with a number rather than fixed (see above).
 3. 1,198 records is a small corpus for a 3,000-feature TF-IDF vocabulary; the model likely overfits to phrasing idiosyncratic to this specific set of judgments rather than generalizing broadly.
 4. Source judgments are High Court / Supreme Court appellate decisions on bail applications and cancellations — not trial-court first-instance bail hearings, which are the more common real-world use case this tool's UI implies.

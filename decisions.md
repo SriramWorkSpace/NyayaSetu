@@ -204,3 +204,63 @@ Its *interaction* — click → heading lifts away → arrow flies off → a sec
 **Decision.** Scoped the extension-based ignores to everywhere except `backend/artifacts/` via `/**/*.ext` patterns plus a `!backend/artifacts/**` negation, verified to work without `git add -f`. `git lfs status` confirms these files now route through LFS as intended.
 
 **Consequences.** Any artifact trained before this fix (only Phase 6's bail models) needed re-staging; none had been silently lost since they were never committed in the first place, just invisible to `git status` until now. Worth remembering: a gitignore rule and a gitattributes LFS rule are not the same thing, and writing one while intending the other fails silently rather than erroring.
+
+---
+
+## D-017 · Removed `custody_days`; `prior_record` is now a 3-state field; crime categories now match the real corpus
+**2026-08-28 · accepted** (user decision, on the options raised by D-014)
+
+**Context.** D-014 flagged two mismatches between the frozen Phase 3 API contract and the real training data (D-014): `custody_days` doesn't exist anywhere in IndianBailJudgments-1200, and `prior_cases` is a 3-level field (Yes/No/Unknown, with Unknown at 49%) collapsed to a boolean in the contract and the Phase 4 Predict form. Put to the user as an explicit choice between four options for `custody_days` and two for `prior_record`.
+
+**Decision.**
+- `custody_days`: **removed entirely** from `BailPredictRequest` (backend and frontend), the Predict Bail form, and ARCHITECTURE.md §4.2/§6. Rationale (user's): asking for a field the model provably ignores reads as a bug to anyone who notices, and is a worse story than a stated data gap. Documented as a known limitation in `MODEL_CARD_bail.md` rather than a silently dead field.
+- `prior_record`: **changed to a 3-state Literal** (`"yes" | "no" | "unknown"`), both in the API contract and the Predict form (now a `SegmentedControl`, defaulting to `"unknown"` — the plurality real-world value). Rationale (user's): "Unknown" is essentially half the training distribution, not an edge case; collapsing it to boolean means a live user could never trigger the state the model spent half its training seeing.
+- The stub backend's fixture-selection logic (`backend/app/routers/bail.py`) now maps `prior_record == "unknown"` to the low-confidence fixture — a real semantic choice (a case with unknown prior record is exactly the kind a model should be less sure about), not just a repurposed test hook.
+- **Found and fixed in the same pass, not separately requested:** the Predict form's crime-category chips were invented before Phase 6's real data existed and didn't match any of the corpus's 12 actual categories — every submission would have silently landed in the model's "Unknown" catch-all. Fixed alongside these changes since it's the identical class of bug the user was just deciding on, and left broken would have undermined the very fix being made. See `bail_audit.md`.
+- **Found, documented, deliberately not fixed:** the trained model also uses `bail_type` as a feature, which the form never collects. Flagged as a Phase 9 follow-up rather than added now — new scope, not a correction of what's already broken, and out of the batch of decisions actually asked for.
+
+**Consequences.** `BailResultPanel`'s live baseline toggle and `/predict/bail/baseline` both updated to the new field. Playwright's `verify-phase4.mjs` updated to click real category labels (`Murder`, `Extortion`) instead of the invented ones (`Assault`, `Theft`). All 47 checks (35 + 12) re-verified green after the change, plus manual `curl` verification of the 3-way `prior_record` values and the still-permissive handling of a stray legacy `custody_days` in a request body (Pydantic ignores unknown fields by default rather than erroring, which is the correct behaviour for a removed field, not something that needed extra code).
+
+---
+
+## D-018 · NER backbone: default to spaCy, no formal benchmark gate
+**2026-08-28 · accepted** (user decision)
+
+**Context.** ARCHITECTURE.md §12 left spaCy vs. InLegalBERT token classification as an open decision for Phase 2 (NER), to be settled by benchmarking both on the same weak-supervised set.
+
+**Decision.** Default to spaCy without blocking on a formal benchmark first. Train the spaCy NER model when Phase 7 reaches it, since it's fast to iterate; only reach for InLegalBERT token classification if spaCy's entity F1 is clearly disappointing on a quick evaluation. Rationale (user's): the quality floor (§11) budgets a real local warm-up cost across five loaded models running on a laptop, and spaCy is the safer default for something that has to coexist with four other models rather than dominate the machine's resources.
+
+**Consequences.** Phase 7's NER work starts with spaCy directly, no comparison harness built first. If spaCy underperforms, InLegalBERT token classification is the fallback, evaluated then, not preemptively.
+
+---
+
+## D-019 · Retrieval corpus capped at ~10,000 judgments, not the full 35,000
+**2026-08-28 · accepted** (user decision)
+
+**Context.** IL-TUR provides roughly 35,000 Supreme Court judgments, reused as the precedent-retrieval corpus per D-006 rather than standing up a second Indian Kanoon scrape. ARCHITECTURE.md §12 left the exact cap open, to be stated explicitly in the retrieval model card once decided.
+
+**Decision.** Cap the FAISS index at approximately 10,000 judgments. Rationale (user's): full 35K is diminishing returns for a demo — no one evaluating this project will notice or care whether precedent search draws from 10K or 35K documents, but everyone will notice a ten-minute FAISS build or an oversized download. This is a stated scope decision, not a hidden shortcut, and belongs explicitly in the retrieval model card when Phase 7 builds the index.
+
+**Consequences.** Phase 7's retrieval work fetches and indexes a ~10K subset of IL-TUR, not the full corpus. `README.md`'s dataset table and the eventual retrieval `MODEL_CARD.md` both need to state the cap plainly, per the original §12 requirement.
+
+---
+
+## D-020 · Packaging stays manual two-terminal through Phase 9; sidecar only at Phase 10 if time remains
+**2026-08-28 · accepted** (user decision)
+
+**Context.** ARCHITECTURE.md §12 left PyInstaller-sidecar packaging vs. manual `uvicorn` + `npm run tauri dev` open, explicitly marked "Phase 10, optional."
+
+**Decision.** Confirmed as a Phase 10 decision, not sooner. Manual two-terminal stays the iteration workflow through the remaining ML and backend-wiring phases; a PyInstaller sidecar is worth building once, for demo-day polish, only if time remains at that point. Rationale (user's): sidecar packaging is real, valuable polish that should not consume time earlier when the API and models are still changing weekly.
+
+**Consequences.** No action needed now. Revisit at Phase 10 per the original plan; this entry just confirms the plan rather than changing it.
+
+---
+
+## D-021 · Bail model's hindsight-framing risk stays disclosed via ablation, not "fixed" with regex
+**2026-08-28 · accepted** (user confirmed D-015)
+
+**Context.** D-015 already made this call during Phase 6: disclose the ~4-point F1 gap between the full model and a structured-only ablation, rather than attempt a fragile regex-based redaction of outcome-revealing language in the `facts` field.
+
+**Decision.** Confirmed as-is; no change. Rationale (user's, endorsing D-015): a regex "fix" that doesn't actually address the leakage but makes the number look cleaner is a worse outcome than an honestly disclosed, quantified risk — the kind of thing that looks bad if discovered later and undisclosed, and looks rigorous if flagged upfront. Framed as a genuine strength of the project's methodology, not a weakness to minimize.
+
+**Consequences.** None — `MODEL_CARD_bail.md`'s existing disclosure stands. Recorded here only so the confirmation itself is part of the decision trail, not just the original call.
