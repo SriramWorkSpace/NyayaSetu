@@ -49,7 +49,11 @@
       "observed": 0.958
     }
   ],
-  "fairness": null,
+  "fairness": {
+    "metric": "demographic_parity_gap",
+    "gap_before": 0.0607,
+    "gap_after": 0.0871
+  },
   "dataset_size": 1198,
-  "last_trained": "2026-08-28T18:45:31.132839+00:00"
+  "last_trained": "2026-08-28T19:08:25.885676+00:00"
 }

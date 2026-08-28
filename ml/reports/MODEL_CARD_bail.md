@@ -52,7 +52,7 @@ Held-out test split (240 records, never touched during training or feature-fitti
 
 **Calibration** (InLegalBERT-fused, the final tier; quantile-binned, 5 bins): predicted vs. observed tracks reasonably but less tightly than the earlier XGBoost+TF-IDF tier did — e.g. predicted 0.5 → observed 0.375, predicted 0.90 → observed 0.792. Worth noting alongside the PR-AUC regression above: this tier's probability estimates are somewhat less reliable, not just its ranking metric. See `bail.json`'s `calibration_points` for the exact numbers the Insights screen reads.
 
-**Fairness:** not yet run. `bail.json`'s `fairness` field is `null` until Phase 8.
+**Fairness (Phase 8, `bail_fairness.md` for the full write-up):** `accused_gender` was excluded from training since Phase 6 specifically to make this audit possible. Demographic parity gap (Male vs Female predicted-grant rate), fused tier: **0.061 raw → 0.087 after controlling for crime type**. The gap gets *larger* after controlling for legitimate factors, not smaller — the opposite of a reassuring result, and the one worth highlighting rather than the smaller raw number. A plausible reading: the raw gap may be partly masked by gender's uneven distribution across crime types, and comparing within the same crime type removes that masking. Performance parity (F1: Male 0.963, Female 0.964) looks fine on its own — a different, separate lens from demographic parity, and the two point in different directions here. 122 female-coded records total is a small sample; read the per-stratum detail in `bail_fairness.json` before treating the weighted-average number as uniformly reliable.
 
 ## Limitations
 

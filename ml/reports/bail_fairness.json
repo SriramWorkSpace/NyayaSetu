@@ -1,0 +1,234 @@
+{
+  "fused": {
+    "gap_before": 0.0607,
+    "gap_after_crime_type": 0.0871,
+    "gap_after_prior_cases": 0.078,
+    "f1_male": 0.9633,
+    "f1_female": 0.9643,
+    "crime_type_strata": [
+      {
+        "stratum": "Attempt to Murder",
+        "n_male": 19,
+        "n_female": 1,
+        "included": false
+      },
+      {
+        "stratum": "Cyber Crime",
+        "n_male": 108,
+        "n_female": 8,
+        "gap": 0.0139,
+        "included": true
+      },
+      {
+        "stratum": "Domestic Violence",
+        "n_male": 63,
+        "n_female": 9,
+        "gap": 0.0635,
+        "included": true
+      },
+      {
+        "stratum": "Dowry Harassment",
+        "n_male": 86,
+        "n_female": 33,
+        "gap": 0.0877,
+        "included": true
+      },
+      {
+        "stratum": "Extortion",
+        "n_male": 99,
+        "n_female": 7,
+        "gap": 0.075,
+        "included": true
+      },
+      {
+        "stratum": "Fraud or Cheating",
+        "n_male": 107,
+        "n_female": 14,
+        "gap": 0.0294,
+        "included": true
+      },
+      {
+        "stratum": "Kidnapping",
+        "n_male": 67,
+        "n_female": 27,
+        "gap": 0.0575,
+        "included": true
+      },
+      {
+        "stratum": "Murder",
+        "n_male": 87,
+        "n_female": 2,
+        "included": false
+      },
+      {
+        "stratum": "Narcotics",
+        "n_male": 126,
+        "n_female": 7,
+        "gap": 0.0397,
+        "included": true
+      },
+      {
+        "stratum": "Others",
+        "n_male": 66,
+        "n_female": 8,
+        "gap": 0.0947,
+        "included": true
+      },
+      {
+        "stratum": "Sexual Offense",
+        "n_male": 117,
+        "n_female": 3,
+        "gap": 0.2821,
+        "included": true
+      },
+      {
+        "stratum": "Theft or Robbery",
+        "n_male": 125,
+        "n_female": 3,
+        "gap": 0.1147,
+        "included": true
+      }
+    ],
+    "prior_cases_strata": [
+      {
+        "stratum": "No",
+        "n_male": 191,
+        "n_female": 24,
+        "gap": 0.0582,
+        "included": true
+      },
+      {
+        "stratum": "Unknown",
+        "n_male": 502,
+        "n_female": 75,
+        "gap": 0.0122,
+        "included": true
+      },
+      {
+        "stratum": "Yes",
+        "n_male": 377,
+        "n_female": 23,
+        "gap": 0.1837,
+        "included": true
+      }
+    ],
+    "n_male": 1070,
+    "n_female": 122
+  },
+  "xgboost_tfidf": {
+    "gap_before": 0.0977,
+    "gap_after_crime_type": 0.1248,
+    "gap_after_prior_cases": 0.1089,
+    "f1_male": 0.9658,
+    "f1_female": 0.9529,
+    "crime_type_strata": [
+      {
+        "stratum": "Attempt to Murder",
+        "n_male": 19,
+        "n_female": 1,
+        "included": false
+      },
+      {
+        "stratum": "Cyber Crime",
+        "n_male": 108,
+        "n_female": 8,
+        "gap": 0.0324,
+        "included": true
+      },
+      {
+        "stratum": "Domestic Violence",
+        "n_male": 63,
+        "n_female": 9,
+        "gap": 0.0635,
+        "included": true
+      },
+      {
+        "stratum": "Dowry Harassment",
+        "n_male": 86,
+        "n_female": 33,
+        "gap": 0.1226,
+        "included": true
+      },
+      {
+        "stratum": "Extortion",
+        "n_male": 99,
+        "n_female": 7,
+        "gap": 0.2006,
+        "included": true
+      },
+      {
+        "stratum": "Fraud or Cheating",
+        "n_male": 107,
+        "n_female": 14,
+        "gap": 0.0013,
+        "included": true
+      },
+      {
+        "stratum": "Kidnapping",
+        "n_male": 67,
+        "n_female": 27,
+        "gap": 0.0647,
+        "included": true
+      },
+      {
+        "stratum": "Murder",
+        "n_male": 87,
+        "n_female": 2,
+        "included": false
+      },
+      {
+        "stratum": "Narcotics",
+        "n_male": 126,
+        "n_female": 7,
+        "gap": 0.119,
+        "included": true
+      },
+      {
+        "stratum": "Others",
+        "n_male": 66,
+        "n_female": 8,
+        "gap": 0.1098,
+        "included": true
+      },
+      {
+        "stratum": "Sexual Offense",
+        "n_male": 117,
+        "n_female": 3,
+        "gap": 0.3504,
+        "included": true
+      },
+      {
+        "stratum": "Theft or Robbery",
+        "n_male": 125,
+        "n_female": 3,
+        "gap": 0.1467,
+        "included": true
+      }
+    ],
+    "prior_cases_strata": [
+      {
+        "stratum": "No",
+        "n_male": 191,
+        "n_female": 24,
+        "gap": 0.1366,
+        "included": true
+      },
+      {
+        "stratum": "Unknown",
+        "n_male": 502,
+        "n_female": 75,
+        "gap": 0.0038,
+        "included": true
+      },
+      {
+        "stratum": "Yes",
+        "n_male": 377,
+        "n_female": 23,
+        "gap": 0.2458,
+        "included": true
+      }
+    ],
+    "n_male": 1070,
+    "n_female": 122
+  }
+}
