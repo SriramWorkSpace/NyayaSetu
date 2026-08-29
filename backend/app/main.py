@@ -1,15 +1,27 @@
 """
-NyayaSetu backend - Phase 3 contract stub.
+NyayaSetu backend - Phase 9: real model calls.
 
-Every ARCHITECTURE.md section 6 endpoint is implemented here against JSON
-fixtures (app/fixtures/), so the frontend talks to a real HTTP server
-speaking the final contract from the first screen it renders. Phase 9
-replaces each router's fixture reads with real model calls; no route,
-schema, or client code changes (decisions.md D-002).
+Every ARCHITECTURE.md section 6 endpoint now calls the actual trained models
+(app/models/) instead of the Phase 3 fixture stub (decisions.md D-002 - the
+whole point of freezing the contract early was that this swap touches
+router bodies only, never the schemas or the frontend).
 
 Binds to 127.0.0.1 only - never 0.0.0.0 (SECURITY.md section 2).
 """
 from __future__ import annotations
+
+import os
+
+# Must be set before any transformers/sentence-transformers/huggingface_hub
+# import - SECURITY.md section 2: "no outbound call the user didn't
+# initiate." Without this, SentenceTransformer.__init__ makes ~15 HTTPS
+# HEAD/GET requests to huggingface.co on every single startup just to
+# re-verify a cache that is already present and correct - caught by
+# reading this process's own startup log, not assumed to be offline by
+# default. All five models load from local artifacts; none need the network
+# once downloaded once during training.
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 import logging
 import time
@@ -19,13 +31,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.models import load_all
 from app.routers import bail, case, health, metrics, qa, scan, search, summarize
 from app.schemas.envelope import fail
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("nyayasetu")
 
-app = FastAPI(title="NyayaSetu API", version="0.1.0-stub")
+app = FastAPI(title="NyayaSetu API", version="0.9.0")
 
 # Vite dev ports only. The shipped app routes through @tauri-apps/plugin-http,
 # which bypasses browser CORS entirely - this exists purely so `vite dev` in a
@@ -89,8 +102,10 @@ app.include_router(case.router, prefix=API_PREFIX)
 
 @app.on_event("startup")
 async def warm_models() -> None:
-    # Phase 3: nothing to warm, fixtures are already in memory after first
-    # read. Phase 9 replaces this with load_all_models() and per-model
-    # timing logs, verified to fire exactly once per process
-    # (CLAUDE.md section 3, ARCHITECTURE.md section 10).
-    logger.info("Stub backend ready - serving fixtures, no models loaded.")
+    # Triggered inside FastAPI's startup event so warm-up is already paid by
+    # the time uvicorn prints "Application startup complete" (ARCHITECTURE.md
+    # section 10). Each model logs its own load time; app.models.load_all()
+    # additionally guards against firing more than once per process
+    # (CLAUDE.md section 3's hard rule).
+    loaded = load_all()
+    logger.info("Backend ready - serving real models: %s", ", ".join(loaded))

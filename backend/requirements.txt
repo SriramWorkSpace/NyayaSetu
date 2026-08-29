@@ -1,19 +1,19 @@
-annotated-doc==0.0.5
-annotated-types==0.8.0
-anyio==4.14.2
-click==8.5.0
-fastapi==0.141.1
-h11==0.16.0
-httptools==0.8.0
-idna==3.19
-pydantic==2.13.4
-pydantic_core==2.46.4
-python-dotenv==1.2.3
-python-multipart==0.0.32
-PyYAML==6.0.3
-starlette==1.6.0
-typing-inspection==0.4.4
-typing_extensions==4.16.0
-uvicorn==0.52.4
-watchfiles==1.2.0
-websockets==17.1
+# Phase 3 stub deps
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+
+# Phase 9 - real model serving (CLAUDE.md section 2)
+torch --index-url https://download.pytorch.org/whl/cpu   # CPU-only wheel
+transformers        # QA's fine-tuned InLegalBERT span head
+scikit-learn        # bail (XGBoost+TF-IDF), summarization (sentence classifier)
+xgboost              # bail final model
+spacy                # NER
+sentence-transformers  # retrieval query embedding (MiniLM)
+faiss-cpu            # retrieval index
+scipy                # sparse feature hstack (bail)
+joblib               # loading trained sklearn/xgboost artifacts
+pytesseract          # OCR wrapper around the Tesseract binary
+Pillow               # image decoding for OCR
+shap                 # SHAP factor attribution for bail predictions

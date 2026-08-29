@@ -16,7 +16,7 @@
 | 6 | Data & bail baselines | ✅ complete |
 | 7 | Core models | ✅ complete |
 | 8 | Fairness audit | ✅ complete |
-| 9 | Real backend | ⬜ not started |
+| 9 | Real backend | ✅ complete |
 | 10 | Model Insights & quality floor | ⬜ not started |
 | 11 | Package *(optional)* | ⬜ not started |
 

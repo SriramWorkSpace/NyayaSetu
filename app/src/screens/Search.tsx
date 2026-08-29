@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search as SearchIcon } from 'lucide-react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { api, ApiError, ApiUnreachableError } from '@/lib/api'
 import { ScreenHeader } from '@/components/feature/screen-header'
 import { PaperPanel } from '@/components/ui/paper-panel'
@@ -24,6 +24,14 @@ export function SearchPrecedent() {
     mutationFn: () => api.searchPrecedent({ query, top_k: 10 }),
   })
 
+  // CLAUDE.md section 7: no metric is ever hardcoded into the UI - this
+  // reads the corpus size /metrics/retrieval actually reports (decisions.md
+  // D-019's 10,000-document cap), not a stale Phase 4 placeholder.
+  const retrievalMetrics = useQuery({
+    queryKey: ['metrics', 'retrieval'],
+    queryFn: () => api.metrics('retrieval'),
+  })
+
   function runSearch() {
     if (!query.trim()) return
     setHasSearched(true)
@@ -35,7 +43,13 @@ export function SearchPrecedent() {
       <ScreenHeader
         title="Search Precedent"
         subtitle="Natural language over past judgments"
-        stats={[{ label: 'Corpus', value: '35,000' }, { label: 'Index', value: 'FAISS (pending)' }]}
+        stats={[
+          {
+            label: 'Corpus',
+            value: retrievalMetrics.data ? retrievalMetrics.data.dataset_size.toLocaleString() : 'pending',
+          },
+          { label: 'Index', value: 'FAISS' },
+        ]}
       />
 
       <PaperPanel variant="record" className="mb-6 px-6 py-6">

@@ -33,6 +33,10 @@ Held-out test split, 270 (question, context) pairs from 1,369 total examples acr
 
 The final model beats the baseline honestly — a real ~6-point EM and ~8-point F1 gain from 2 epochs of fine-tuning versus bare lexical similarity. Training loss dropped from 5.89 to 0.75 over the 2 epochs (276 batches total, batch size 8, `lr=3e-5`), confirming the model was still learning rather than plateaued — more epochs may improve this further, not attempted here given the CPU-only time budget for this phase.
 
+## Phase 9 serving notes
+
+**Limitations #2 and #3 below are now confirmed, not just anticipated.** Tested directly against the live retrieval corpus via `/qa/extract` (decisions.md D-030 item 4): the model was fine-tuned on `IndianBailJudgments-1200`'s short `facts + judgment_reason` context and formally-phrased `legal_issues` questions, but the live Case Detail / Ask flow runs on the ILDC retrieval corpus - full multi-page judgments, naturally-phrased user questions, and the "co"->"company" text corruption disclosed in `MODEL_CARD_retrieval.md`. Real questions against real documents returned near-zero-confidence or off-topic spans in several tested cases (score as low as 0.0002-0.0013), well under the 0.7393 held-out F1 above. Chunk retrieval and offset mapping (`app/models/retrieval.find_relevant_chunk`, `app/routers/qa.py`) were checked separately and are locating plausible, relevant chunks correctly - the gap is the fine-tuned model's real generalization shortfall to a different corpus and question style, not a serving-layer bug. The per-answer `score` the API returns already reflects this honestly (it is often near-zero on this corpus) - the UI must surface that low score rather than round it up to imply the reported F1's confidence level.
+
 ## Limitations
 
 1. Answer spans are a semantic-similarity proxy, not hand-verified ground truth — a real number, but not the same rigor as a human marking spans.
