@@ -139,6 +139,18 @@ for (const width of [1024, 1600]) {
   await ctx.close();
 }
 
+// Insights has its own overflow risk (a metric table and a calibration
+// chart) not covered by Predict above - checked separately, on real data.
+for (const width of [1024, 1600]) {
+  const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(BASE + '/app/insights', { waitUntil: 'networkidle' });
+  await page.waitForSelector('text=Baseline to final', { timeout: 8000 });
+  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+  check(`Insights: no horizontal overflow at ${width}px`, scrollWidth <= width + 1, `scrollWidth=${scrollWidth}`);
+  await ctx.close();
+}
+
 // ---- 7. Reduced motion: typewriter resolves instantly on Startup --------
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 832 }, reducedMotion: 'reduce' });

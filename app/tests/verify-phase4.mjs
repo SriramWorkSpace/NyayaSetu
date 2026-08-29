@@ -174,6 +174,54 @@ const REAL_CASE_TITLE = 'The petitioners are before this Court assailing the ord
   await ctx.close();
 }
 
+// ---- 7. Model Insights: real /metrics data, per-module, data-driven -----
+// Phase 10 - ARCHITECTURE.md section 4.7. Calibration/fairness are asserted
+// on bail specifically (the only module with non-null calibration_points/
+// fairness in real data) but the component itself branches on data
+// presence, not a module-name check - this is the regression test for that.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 1200 } });
+  const page = await ctx.newPage();
+  await page.goto(BASE + '/app/insights', { waitUntil: 'networkidle' });
+  await page.waitForSelector('text=Baseline to final', { timeout: 8000 });
+
+  const datasetSizeVisible = await page.getByText('1,198').isVisible().catch(() => false);
+  check('Insights shows the real bail dataset size from /metrics, not a placeholder', datasetSizeVisible);
+
+  // "XGBoost + TF-IDF" appears three times (the comparison bar's tier label,
+  // plus two metric-table column captions) - the comparison bar's tier
+  // label is the only one styled with the "items-center" row class, so
+  // check its own text for the "Served" badge rather than guess a DOM path.
+  const servedBadgeOnXgboost = await page.evaluate(() => {
+    const label = Array.from(document.querySelectorAll('span')).find(
+      (s) => s.textContent?.trim().startsWith('XGBoost + TF-IDF') && s.className.includes('items-center'),
+    );
+    return Boolean(label && label.textContent?.includes('Served'));
+  });
+  check('bail marks XGBoost + TF-IDF as served, not the fused "final" tier (decisions.md D-029)', servedBadgeOnXgboost);
+
+  const calibrationVisible = await page.getByText('Calibration', { exact: true }).isVisible().catch(() => false);
+  const fairnessVisible = await page.getByText(/Fairness audit/).isVisible().catch(() => false);
+  check('bail (the only module with real calibration/fairness data) renders both', calibrationVisible && fairnessVisible);
+
+  await page.getByRole('tab', { name: 'NER' }).click();
+  await page.waitForTimeout(400);
+  const nerHasNoCalibration = !(await page.getByText('Calibration', { exact: true }).isVisible().catch(() => false));
+  const nerShowsEntityF1 = await page.getByText('Entity F1 (overall)').isVisible().catch(() => false);
+  check(
+    'switching modules swaps content (NER has no calibration card, shows its own metric rows)',
+    nerHasNoCalibration && nerShowsEntityF1,
+  );
+
+  await page.getByRole('tab', { name: 'Retrieval' }).click();
+  await page.waitForTimeout(400);
+  const retrievalNoteVisible = await page.getByText(/production scale/).isVisible().catch(() => false);
+  check('retrieval discloses the production-scale vs comparison-scale distinction (MODEL_CARD_retrieval.md)', retrievalNoteVisible);
+
+  await page.screenshot({ path: `${SHOTS}/insights.png` });
+  await ctx.close();
+}
+
 await browser.close();
 
 const failed = results.filter((r) => !r.pass);

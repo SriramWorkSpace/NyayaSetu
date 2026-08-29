@@ -17,7 +17,7 @@
 | 7 | Core models | ✅ complete |
 | 8 | Fairness audit | ✅ complete |
 | 9 | Real backend | ✅ complete |
-| 10 | Model Insights & quality floor | ⬜ not started |
+| 10 | Model Insights & quality floor | ✅ complete |
 | 11 | Package *(optional)* | ⬜ not started |
 
 ## Build order, and why it differs from ARCHITECTURE.md §9

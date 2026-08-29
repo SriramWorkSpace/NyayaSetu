@@ -6,12 +6,12 @@ import { FloatingCard } from '@/components/ui/floating-card'
 import { ListRow } from '@/components/ui/list-row'
 import { EmptyState } from '@/components/ui/states'
 import { IconButton } from '@/components/ui/button'
-import { PlaceholderScreen } from './Placeholder'
 
 export { Predict } from './Predict'
 export { Scan } from './Scan'
 export { SearchPrecedent } from './Search'
 export { CaseDetail } from './CaseDetail'
+export { Insights } from './Insights'
 
 /**
  * Saved cases and activity history, both from the session store
@@ -79,17 +79,5 @@ export function CaseLibrary() {
         )}
       </div>
     </>
-  )
-}
-
-export function Insights() {
-  return (
-    <PlaceholderScreen
-      title="Model Insights"
-      subtitle="Evaluation, served live"
-      stats={[{ label: 'Modules', value: '0 / 5' }, { label: 'Last trained', value: 'never' }]}
-      emptyTitle="Built last, on purpose"
-      emptyBody="This screen depends on every module's real metrics existing. It renders baselines against final models, the calibration curve and the fairness audit, read from the backend at request time rather than hardcoded here."
-    />
   )
 }
