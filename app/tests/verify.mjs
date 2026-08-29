@@ -85,10 +85,35 @@ for (const theme of ['light', 'dark']) {
   check('content is PUSHED not covered (main.x shifts right)', mainBoxAfter.x > mainBoxBefore.x + 40,
     `main.x ${mainBoxBefore.x} -> ${mainBoxAfter.x}`);
 
-  const icon = nav.locator('svg').first();
+  // .first() targets a destination link's icon specifically (nav.locator
+  // ('svg') alone would now match the header Logo mark first, since it is
+  // also an <svg> and renders before the destination list in DOM order).
+  const icon = nav.locator('a svg').first();
   const iconBox = await icon.boundingBox();
   const withinRail = iconBox.x >= collapsedBox.x && (iconBox.x + iconBox.width) <= (collapsedBox.x + collapsedBox.width);
   check('nav icon fits inside collapsed rail (not clipped)', withinRail, JSON.stringify({ iconBox, collapsedBox }));
+
+  // Regression check for a real, measured bug: the active item's "blob"
+  // background used to size itself to the whole (stretched, too-narrow)
+  // row - narrower than an icon+padding actually needs while collapsed -
+  // which pinned the icon flush against the row's edge inside a
+  // non-square oval instead of a circle centered on it. Only visible by
+  // measuring actual geometry, not by eyeballing a screenshot at one size.
+  const activeLink = nav.locator('a[aria-current="page"]').first();
+  const activeIconWrapper = activeLink.locator('span.relative.grid').first();
+  const activeIconSvg = activeLink.locator('svg').first();
+  const activeBlob = activeIconWrapper.locator('span[aria-hidden]').first();
+  const wrapperBox = await activeIconWrapper.boundingBox();
+  const svgBox = await activeIconSvg.boundingBox();
+  const blobBox = await activeBlob.boundingBox();
+  const blobIsSquare = blobBox && Math.abs(blobBox.width - blobBox.height) < 1;
+  const iconCenteredInBlobX = blobBox && Math.abs((svgBox.x + svgBox.width / 2) - (blobBox.x + blobBox.width / 2)) < 1;
+  const iconCenteredInBlobY = blobBox && Math.abs((svgBox.y + svgBox.height / 2) - (blobBox.y + blobBox.height / 2)) < 1;
+  check(
+    'active nav item: collapsed blob is a circle centered on the icon, not an off-center oval',
+    Boolean(blobIsSquare && iconCenteredInBlobX && iconCenteredInBlobY),
+    JSON.stringify({ wrapperBox, blobBox, svgBox }),
+  );
 
   await ctx.close();
 }

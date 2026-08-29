@@ -12,6 +12,7 @@ import { DisclaimerChip } from '@/components/ui/disclaimer'
 import { EmptyState, ErrorState, SkeletonBlock } from '@/components/ui/states'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { Body, Caption, Data, Display, H1, H2, Label } from '@/components/ui/typography'
+import { Logo } from '@/components/ui/logo'
 
 function Section({ name, children }: { name: string; children: React.ReactNode }) {
   return (
@@ -39,6 +40,16 @@ export function Sandbox() {
           <H1>Component sandbox</H1>
           <Body>Toggle the theme at top right. Every primitive must hold up in both.</Body>
         </div>
+
+        <Section name="Logo">
+          <div className="flex items-center gap-6">
+            <span className="grid size-8 place-items-center rounded-full border-2 border-ink text-ink">
+              <Logo size={15} />
+            </span>
+            <Logo size={24} className="text-ink" />
+            <Logo size={40} className="text-ink" />
+          </div>
+        </Section>
 
         <Section name="Typography">
           <Display>0.784</Display>
