@@ -75,10 +75,15 @@ export function Predict() {
       <ScreenHeader
         title="Predict Bail"
         subtitle="Structured case facts"
-        stats={[
-          { label: 'Model', value: 'xgboost-stub' },
-          { label: 'Baseline', value: 'logreg-stub' },
-        ]}
+        // Real model_version only exists on a completed BailPredictResponse
+        // (decisions.md D-029: which tier that is is a served-model choice,
+        // not something to guess at before a prediction has run) - this was
+        // "xgboost-stub" from the Phase 3 fixture era until caught here,
+        // in violation of CLAUDE.md section 7's "no metric is ever
+        // hardcoded" rule. A stale baseline name is worse than none, so
+        // there is no second stat here - the real one only appears inside
+        // BailResultPanel's own "Compare against baseline" toggle.
+        stats={[{ label: 'Model', value: result?.model_version ?? 'pending' }]}
       />
 
       <form

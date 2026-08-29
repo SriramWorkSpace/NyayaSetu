@@ -37,6 +37,16 @@ const browser = await chromium.launch();
   const stampVisible = await page.getByText(/Bail (granted|denied)/).isVisible();
   check('result sheet shows a verdict stamp', stampVisible);
 
+  // Regression check for a real bug: the header's "Model" stat was a
+  // leftover Phase 3 fixture string ("xgboost-stub") never wired to the
+  // real BailPredictResponse.model_version - caught only by testing an
+  // actual `tauri build` release window, not `tauri dev` (decisions.md,
+  // Phase 11). Confirms the live model_version renders and the stub string
+  // never appears anywhere on the page.
+  const modelStatVisible = await page.getByText(/xgboost-tfidf-\d{4}-\d{2}-\d{2}/).isVisible().catch(() => false);
+  const stubStringAbsent = !(await page.getByText('xgboost-stub').isVisible().catch(() => false));
+  check('Predict header shows the real served model_version, not a stub placeholder', modelStatVisible && stubStringAbsent);
+
   await page.getByRole('button', { name: 'Compare against baseline' }).click();
   await page.waitForTimeout(700);
   const baselineVisible = await page.getByText('logistic_regression').isVisible().catch(() => false);

@@ -1,10 +1,10 @@
 [package]
 name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+version = "1.0.0"
+description = "NyayaSetu - a local-first desktop app for Indian judicial ML: bail prediction, extractive QA, document scan, summarization, and precedent retrieval"
+authors = ["Sriram Madala"]
+license = "MIT"
+repository = "https://github.com/SriramWorkSpace/NyayaSetu"
 edition = "2021"
 rust-version = "1.77.2"
 

@@ -46,23 +46,31 @@ public class NyayaSetuWin32 {
 "@
 Add-Type -AssemblyName System.Drawing
 
-function Find-WindowByPid([int]$pid) {
-    $result = [IntPtr]::Zero
+function Find-WindowByPid([int]$targetPid) {
+    # $script:foundWindow, not a function-local $result: the callback below
+    # runs as an EnumWindows delegate, and `$script:result = ...` inside it
+    # was previously setting a *different* variable than the function-local
+    # $result this function returned - the match always got recorded, then
+    # silently discarded, so this always returned IntPtr.Zero regardless of
+    # whether a window was actually found. Caught by comparing against a
+    # standalone EnumWindows call that collected results into an array and
+    # printed them after enumeration finished, which found the window fine.
+    $script:foundWindow = [IntPtr]::Zero
     $cb = {
         param($hWnd, $lParam)
         if ([NyayaSetuWin32]::IsWindowVisible($hWnd)) {
             $owner = 0
             [NyayaSetuWin32]::GetWindowThreadProcessId($hWnd, [ref]$owner) | Out-Null
-            if ($owner -eq $pid) {
+            if ($owner -eq $targetPid) {
                 $sb = New-Object System.Text.StringBuilder 256
                 [NyayaSetuWin32]::GetWindowText($hWnd, $sb, 256) | Out-Null
-                if ($sb.ToString().Length -gt 0) { $script:result = $hWnd; return $false }
+                if ($sb.ToString().Length -gt 0) { $script:foundWindow = $hWnd; return $false }
             }
         }
         return $true
     }
     [NyayaSetuWin32]::EnumWindows($cb, [IntPtr]::Zero) | Out-Null
-    return $result
+    return $script:foundWindow
 }
 
 $hwnd = Find-WindowByPid $ProcessId

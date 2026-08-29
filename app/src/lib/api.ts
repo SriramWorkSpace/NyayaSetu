@@ -27,9 +27,19 @@ import type {
 
 const BASE_URL = 'http://127.0.0.1:8000/api/v1'
 
+// Tauri v2 injects window.__TAURI_INTERNALS__, not window.__TAURI__ - the
+// latter only appears when `app.withGlobalTauri` is explicitly true in
+// tauri.conf.json (a legacy back-compat flag this project does not set).
+// Checking the wrong global meant every request in the packaged app silently
+// fell through to plain `fetch`, which works during `tauri dev` only because
+// devUrl (http://localhost:5173) is already in FastAPI's CORS allow-list -
+// it is not the Tauri-mediated request ARCHITECTURE.md section 5.3
+// describes, and a real `tauri build` release (served from a different
+// origin, not in that allow-list) fails outright. Found by capturing the
+// actual native window of a `tauri build` release, not just `tauri dev`.
 declare global {
   interface Window {
-    __TAURI__?: unknown
+    __TAURI_INTERNALS__?: unknown
   }
 }
 
@@ -60,7 +70,7 @@ async function doFetch(
   init: { method: string; body?: BodyInit; headers?: Record<string, string> },
 ): Promise<Response> {
   const url = `${BASE_URL}${path}`
-  if (typeof window !== 'undefined' && window.__TAURI__) {
+  if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) {
     const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http')
     return tauriFetch(url, init)
   }
