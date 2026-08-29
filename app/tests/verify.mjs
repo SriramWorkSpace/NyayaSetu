@@ -115,6 +115,34 @@ for (const theme of ['light', 'dark']) {
     JSON.stringify({ wrapperBox, blobBox, svgBox }),
   );
 
+  // Regression check for a second real, measured bug: the label's default
+  // text-label line-height (1.4, reserving generous ascender/descender
+  // padding) made its line-box taller than its actual glyph ink - for a
+  // label with no descenders ("Scan Document" etc.), the visible letters
+  // sat noticeably higher than the icon's geometric center even though the
+  // CSS line-box itself was centered correctly. Fixed with leading-none, so
+  // the line-box hugs the glyph tightly. Checked here against the icon's
+  // vertical center to the pixel, not eyeballed.
+  await nav.hover();
+  await page.waitForTimeout(400);
+  const { labelBox, labelIconBox } = await nav.evaluate((navEl) => {
+    const label = navEl.querySelector('a span.relative.overflow-hidden');
+    const icon = label.parentElement.querySelector('span.relative.grid svg');
+    const l = label.getBoundingClientRect();
+    const i = icon.getBoundingClientRect();
+    return {
+      labelBox: { y: l.y, height: l.height },
+      labelIconBox: { y: i.y, height: i.height },
+    };
+  });
+  const verticallyAligned =
+    labelBox && labelIconBox && Math.abs((labelBox.y + labelBox.height / 2) - (labelIconBox.y + labelIconBox.height / 2)) < 1;
+  check(
+    'nav label text is vertically centered on its icon, not sitting high from reserved descender space',
+    Boolean(verticallyAligned),
+    JSON.stringify({ labelBox, labelIconBox }),
+  );
+
   await ctx.close();
 }
 

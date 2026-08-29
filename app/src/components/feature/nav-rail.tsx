@@ -50,7 +50,7 @@ export function NavRail({ expanded, onExpandedChange }: NavRailProps) {
         </span>
         <span
           className={cn(
-            'overflow-hidden font-mono text-[13px] whitespace-nowrap uppercase tracking-[0.18em] text-ink transition-[opacity,max-width] duration-200',
+            'overflow-hidden font-mono text-[13px] leading-none whitespace-nowrap uppercase tracking-[0.18em] text-ink transition-[opacity,max-width] duration-200',
             expanded ? 'max-w-40 opacity-100' : 'max-w-0 opacity-0',
           )}
         >
@@ -113,7 +113,7 @@ export function NavRail({ expanded, onExpandedChange }: NavRailProps) {
               </span>
               <span
                 className={cn(
-                  'relative overflow-hidden whitespace-nowrap text-label transition-[opacity,max-width] duration-200',
+                  'relative overflow-hidden whitespace-nowrap text-label leading-none transition-[opacity,max-width] duration-200',
                   expanded ? 'max-w-40 opacity-100' : 'max-w-0 opacity-0',
                 )}
               >
