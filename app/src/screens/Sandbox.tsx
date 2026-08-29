@@ -1,12 +1,20 @@
 import { useState } from 'react'
-import { RotateCcw, FileText, Trash2 } from 'lucide-react'
+import { RotateCcw, FileText, Trash2, Gavel, ScanLine } from 'lucide-react'
 import { PaperPanel } from '@/components/ui/paper-panel'
 import { FloatingCard } from '@/components/ui/floating-card'
 import { PrimaryButton, IconButton } from '@/components/ui/button'
 import { Chip } from '@/components/ui/chip'
 import { StatPill } from '@/components/ui/stat-pill'
+import { StatCard } from '@/components/ui/stat-card'
 import { StampBadge } from '@/components/ui/stamp-badge'
 import { ConfidenceMeter } from '@/components/ui/confidence-meter'
+import { BarChart } from '@/components/ui/bar-chart'
+import { MetricComparisonBar } from '@/components/ui/metric-comparison-bar'
+import { CalibrationCurve } from '@/components/ui/calibration-curve'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import { ListRow } from '@/components/ui/list-row'
+import { SpanHighlighter } from '@/components/ui/span-highlighter'
+import { Sheet } from '@/components/ui/sheet'
 import { Typewriter } from '@/components/ui/typewriter'
 import { DisclaimerChip } from '@/components/ui/disclaimer'
 import { EmptyState, ErrorState, SkeletonBlock } from '@/components/ui/states'
@@ -27,9 +35,17 @@ function Section({ name, children }: { name: string; children: React.ReactNode }
  * Every primitive, in isolation, in both themes. The Phase 1 gate: this route
  * must be complete before a single real screen is built.
  */
+const SEGMENTS = [
+  { value: 'unknown', label: 'Unknown' },
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+] as const
+
 export function Sandbox() {
   const [selected, setSelected] = useState('bail')
   const [conf, setConf] = useState(0.78)
+  const [segment, setSegment] = useState<(typeof SEGMENTS)[number]['value']>('unknown')
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
     <div className="min-h-[100dvh] bg-paper px-8 py-12">
@@ -109,6 +125,32 @@ export function Sandbox() {
             <StatPill label="Avg confidence" value="74.2%" />
             <StatPill label="Corpus" value="35,121" />
           </div>
+          <SegmentedControl options={SEGMENTS} value={segment} onChange={setSegment} />
+        </Section>
+
+        <Section name="Stat cards">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard label="Case number" value="CRL.A. 1274/2019" confidence={0.94} />
+            <StatCard label="Court" value={null} confidence={0.12} />
+            <StatCard label="IPC sections" value="420, 406, 34" />
+          </div>
+        </Section>
+
+        <Section name="List rows">
+          <FloatingCard className="px-4">
+            <ListRow
+              icon={<Gavel size={16} strokeWidth={1.5} />}
+              title="Bail: Extortion"
+              subtitle="29 August 2026, 4:12 PM"
+              value="granted · 82%"
+            />
+            <ListRow
+              icon={<ScanLine size={16} strokeWidth={1.5} />}
+              title="Scan: fir-copy.jpg"
+              subtitle="29 August 2026, 3:58 PM"
+              value="96%"
+            />
+          </FloatingCard>
         </Section>
 
         <Section name="Verdict stamps">
@@ -134,6 +176,57 @@ export function Sandbox() {
               className="accent-ink"
             />
           </FloatingCard>
+        </Section>
+
+        <Section name="Charts">
+          <FloatingCard className="flex flex-col gap-6 p-6">
+            <div className="flex flex-col gap-3">
+              <Caption>Factor bars (SHAP-style, diverging)</Caption>
+              <BarChart
+                data={[
+                  { label: 'Prior record: No', value: 0.46, tone: 'granted' },
+                  { label: 'Mentions "cooperated"', value: 0.31, tone: 'granted' },
+                  { label: 'Crime type: Extortion', value: -0.22, tone: 'denied' },
+                ]}
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Caption>Baseline to final</Caption>
+              <MetricComparisonBar
+                tiers={[
+                  { label: 'Baseline', value: 0.781 },
+                  { label: 'Final', value: 0.8258, served: true },
+                ]}
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Caption>Calibration curve</Caption>
+              <CalibrationCurve
+                points={[
+                  { predicted: 0.17, observed: 0.15 },
+                  { predicted: 0.5, observed: 0.38 },
+                  { predicted: 0.76, observed: 0.79 },
+                  { predicted: 0.98, observed: 0.96 },
+                ]}
+              />
+            </div>
+          </FloatingCard>
+        </Section>
+
+        <Section name="Span highlighter">
+          <FloatingCard className="p-6">
+            <SpanHighlighter
+              text="The petitioner has been in judicial custody since 20.01.2021 and has cooperated fully with the investigation."
+              highlight={{ start: 38, end: 58 }}
+            />
+          </FloatingCard>
+        </Section>
+
+        <Section name="Sheet">
+          <PrimaryButton onClick={() => setSheetOpen(true)}>Open sheet</PrimaryButton>
+          <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Sample sheet">
+            <Body>Secondary content slides in from the right, never up from the bottom.</Body>
+          </Sheet>
         </Section>
 
         <Section name="States">

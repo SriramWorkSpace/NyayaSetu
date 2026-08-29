@@ -452,3 +452,19 @@ The gavel PNG was run through `tauri icon` to regenerate every platform icon siz
 **Label vertical alignment, measured not guessed.** `text-label`'s line-height (1.4, tokens.css) reserves ascender/descender space well beyond what a label like "Scan Document" (no descenders) actually uses - so its line-box was centered correctly by the flexbox (confirmed: icon center and line-box center matched to the pixel), but the *visible ink* sat measurably higher within that oversized box, which is what actually gets perceived as "not aligned." Fixed with `leading-none` on both the destination labels and the header wordmark, tightening the line-box to hug the glyph - re-measured afterward at exactly 0px discrepancy between icon center and label center (previously ~0.6-2px depending on the specific string's ascender/descender mix, small in isolation but visually obvious next to a precisely-centered icon).
 
 **Consequences.** The same `text-label` line-height quirk exists everywhere else an icon sits next to label text (e.g. `PrimaryButton`'s icon+label pairs) - not fixed here, since the user's reports were specifically about the nav rail, but worth the same `leading-none` treatment if it is ever reported there too. Added a permanent Playwright check (`verify.mjs`) measuring label-to-icon vertical center to the pixel, alongside the existing blob-circle check from D-033.
+
+
+---
+
+## D-036 · Polish pass: measured that the button/back-link alignment "issue" isn't real, removed dead code, closed a Sandbox coverage gap
+**2026-08-29 · accepted**
+
+**Context.** Following D-035's nav-label fix, asked to sweep for the same alignment issue elsewhere (PrimaryButton's icon+label pairs specifically flagged as a likely candidate).
+
+**The sweep found the button case is not actually a bug.** Measured PrimaryButton's "Use camera" (icon+text) and CaseDetail's "Back" link the same way D-035 measured the nav rail: icon-center to text-glyph-center distance is ~0.5-0.6px in both cases - the same magnitude as the nav rail's pre-fix discrepancy, and imperceptible without significant zoom. Tested applying the same `leading-none` fix anyway to see if it was still worth doing defensively: it drops PrimaryButton's height by 8px (46px -> 38px, ~17%) app-wide, since unlike the nav rail's icon-driven row height, a button's height is governed by its own text line-height plus padding - fixing an imperceptible 0.6px gap here would visibly shrink every button in the app. Reverted; left `PrimaryButton` and the `CaseDetail` back-link as they were. The nav rail fix in D-035 remains correct specifically because that row's height was never governed by the label's line-height in the first place (it's an icon-sized row), so tightening it there had no such side effect - the two cases only look similar on the surface.
+
+**Two unrelated findings from the same pass, both worth fixing on their own:**
+1. `components/ui/switch.tsx` (`SwitchField`) had zero usages anywhere in the app - genuine dead code (CLAUDE.md section 4), not a documented, deliberately-unused reference file the way `lets-work-section.tsx` is (D-007 explicitly says why that one stays). Deleted.
+2. Eight real, in-use `components/ui/` primitives were missing from `/sandbox` - `BarChart`, `MetricComparisonBar`, `CalibrationCurve`, `SegmentedControl`, `ListRow`, `StatCard`, `SpanHighlighter`, `Sheet` - a violation of CLAUDE.md section 7's "every primitive renders in `/sandbox`, in both themes" testing rule. All eight added with representative sample data, verified in both themes.
+
+**Consequences.** Don't assume a fix that worked in one context (nav rail) generalizes to a structurally-similar-looking one (buttons) without re-measuring in that new context - the two had different root causes for why their line-height mattered (or, for buttons, didn't meaningfully matter) to layout.
