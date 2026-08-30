@@ -48,15 +48,17 @@ import json
 import logging
 import re
 import time
-from pathlib import Path
 
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
+from app.base_dir import backend_dir
+
 logger = logging.getLogger("nyayasetu.models.retrieval")
 
-ARTIFACTS_DIR = Path(__file__).resolve().parents[2] / "artifacts" / "retrieval"
+ARTIFACTS_DIR = backend_dir() / "artifacts" / "retrieval"
+MINILM_DIR = backend_dir() / "artifacts" / "minilm"
 DEFAULT_COURT = "Supreme Court of India"
 TITLE_PREVIEW_WORDS = 12
 
@@ -65,7 +67,14 @@ _state: dict = {}
 
 def load() -> None:
     t0 = time.perf_counter()
-    _state["embedder"] = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    # A local copy of the model files, not the by-name "sentence-transformers/
+    # all-MiniLM-L6-v2" id - that form depends on this machine's own
+    # ~/.cache/huggingface already having it (true here, during development,
+    # but never true on a machine that only ever installed the packaged app -
+    # HF_HUB_OFFLINE=1 (main.py) means it can't fall back to downloading it
+    # either). Loading a real local directory works identically in both
+    # cases and removes that dependency entirely.
+    _state["embedder"] = SentenceTransformer(str(MINILM_DIR))
     _state["index"] = faiss.read_index(str(ARTIFACTS_DIR / "faiss.index"))
     chunks: list[dict] = json.loads((ARTIFACTS_DIR / "chunks.json").read_text(encoding="utf-8"))
     _state["chunks"] = chunks

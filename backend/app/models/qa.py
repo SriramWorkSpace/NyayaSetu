@@ -16,15 +16,16 @@ from __future__ import annotations
 
 import logging
 import time
-from pathlib import Path
 
 import torch
 import torch.nn.functional as F
+
+from app.base_dir import backend_dir
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
 logger = logging.getLogger("nyayasetu.models.qa")
 
-ARTIFACTS_DIR = Path(__file__).resolve().parents[2] / "artifacts" / "qa" / "inlegalbert_qa"
+ARTIFACTS_DIR = backend_dir() / "artifacts" / "qa" / "inlegalbert_qa"
 MAX_SEQ_LEN = 384
 
 _state: dict = {}

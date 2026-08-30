@@ -39,13 +39,14 @@ from __future__ import annotations
 import logging
 import re
 import time
-from pathlib import Path
 
 import spacy
 
+from app.base_dir import backend_dir
+
 logger = logging.getLogger("nyayasetu.models.ner")
 
-ARTIFACTS_DIR = Path(__file__).resolve().parents[2] / "artifacts" / "ner" / "spacy_model"
+ARTIFACTS_DIR = backend_dir() / "artifacts" / "ner" / "spacy_model"
 
 # Generic Indian legal citation shapes: "Crl.A. No. 1274/2019", "W.P.(C) 5678/2019",
 # "Bail Appln. 910/2021", "SLP(Crl) No. 123/2020" - undisclosed-quality regex,

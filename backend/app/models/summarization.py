@@ -10,16 +10,17 @@ from __future__ import annotations
 
 import logging
 import time
-from pathlib import Path
 
 import joblib
 import numpy as np
 import spacy
+
+from app.base_dir import backend_dir
 from sklearn.metrics.pairwise import cosine_similarity
 
 logger = logging.getLogger("nyayasetu.models.summarization")
 
-ARTIFACTS_DIR = Path(__file__).resolve().parents[2] / "artifacts" / "summarization"
+ARTIFACTS_DIR = backend_dir() / "artifacts" / "summarization"
 
 _state: dict = {}
 

@@ -22,11 +22,36 @@ confidence, is what "field_confidence" actually measures.
 from __future__ import annotations
 
 import io
+import sys
+from pathlib import Path
 
 import pytesseract
 from PIL import Image
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+def _resolve_tesseract_cmd() -> str:
+    """
+    A packaged install has no system Tesseract to find - PyInstaller bundles
+    a trimmed copy (backend/vendor/tesseract/) as a sidecar resource instead.
+    `sys._MEIPASS` is the bundle's own runtime directory when frozen (set by
+    PyInstaller, not a normal Python attribute - checked via getattr rather
+    than assumed present).
+
+    Preferring the vendored copy in dev too (when present) means local
+    testing already exercises the exact binary + tessdata pairing that ships,
+    rather than only ever testing the full system install and finding out
+    about a missing bundled DLL for the first time in the packaged app.
+    """
+    if getattr(sys, "frozen", False):
+        bundled = Path(sys._MEIPASS) / "vendor" / "tesseract" / "tesseract.exe"  # type: ignore[attr-defined]
+    else:
+        bundled = Path(__file__).resolve().parents[2] / "vendor" / "tesseract" / "tesseract.exe"
+    if bundled.exists():
+        return str(bundled)
+    return r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+
+pytesseract.pytesseract.tesseract_cmd = _resolve_tesseract_cmd()
 
 
 def extract_text(image_bytes: bytes) -> tuple[str, list[tuple[int, int, float]], float]:

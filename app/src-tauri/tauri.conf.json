@@ -27,6 +27,15 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": [
+      "backend-dist/"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "compression": "zlib"
+      }
+    },
     "publisher": "Sriram Madala",
     "copyright": "Copyright (c) 2026 Sriram Madala",
     "category": "Education",

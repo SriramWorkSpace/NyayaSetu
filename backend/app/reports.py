@@ -9,10 +9,11 @@ rather than stale-until-restart in the one case that matters least.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
-REPORTS_DIR = Path(__file__).resolve().parents[2] / "ml" / "reports"
+from app.base_dir import repo_root
+
+REPORTS_DIR = repo_root() / "ml" / "reports"
 
 
 def metrics_for(module: str) -> dict[str, Any] | None:

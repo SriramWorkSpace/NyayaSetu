@@ -47,7 +47,6 @@ from __future__ import annotations
 import json
 import logging
 import time
-from pathlib import Path
 
 import joblib
 import numpy as np
@@ -55,10 +54,12 @@ import pandas as pd
 import shap
 from scipy.sparse import hstack, csr_matrix
 
+from app.base_dir import backend_dir, repo_root
+
 logger = logging.getLogger("nyayasetu.models.bail")
 
-ARTIFACTS_DIR = Path(__file__).resolve().parents[2] / "artifacts" / "bail"
-REPORTS_DIR = Path(__file__).resolve().parents[3] / "ml" / "reports"
+ARTIFACTS_DIR = backend_dir() / "artifacts" / "bail"
+REPORTS_DIR = repo_root() / "ml" / "reports"
 
 # Corpus majority-class defaults for fields the API never collects - see
 # module docstring. Verified against ml/data/bail/raw.json, not guessed.

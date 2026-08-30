@@ -11,6 +11,18 @@ dist/
 build/
 app/src-tauri/target/
 target/
+app/src-tauri/backend-dist/
+release-artifacts/
+
+# ── vendored native binary, not source ────────
+# A trimmed copy of a local Tesseract install (tesseract.exe + its DLLs +
+# eng/osd tessdata only), copied in per decisions.md D-037 so the PyInstaller
+# sidecar can bundle a working OCR binary without depending on Tesseract
+# being separately installed on the machine that builds the installer.
+# Regenerable from any local Tesseract install (CLAUDE.md's repeatable
+# actions) - not committed, at 174MB, without being asked to push that onto
+# the git-lfs quota on top of backend/artifacts' existing ~700MB.
+backend/vendor/
 
 # ── datasets: fetched, never committed ────────
 ml/data/

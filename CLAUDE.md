@@ -263,6 +263,34 @@ winget install UB-Mannheim.TesseractOCR
 # then confirm: tesseract --version
 ```
 
+### Rebuild the PyInstaller sidecar (decisions.md D-037)
+
+`backend/vendor/tesseract/` is gitignored (a 174MB trimmed copy of a local
+Tesseract install, not committed) - populate it once from a real install
+before building the sidecar:
+
+```powershell
+mkdir backend/vendor/tesseract/tessdata
+cp "C:/Program Files/Tesseract-OCR/tesseract.exe" "C:/Program Files/Tesseract-OCR"/*.dll backend/vendor/tesseract/
+cp "C:/Program Files/Tesseract-OCR/tessdata/eng.traineddata" "C:/Program Files/Tesseract-OCR/tessdata/osd.traineddata" backend/vendor/tesseract/tessdata/
+```
+
+Then freeze the backend and copy it where Tauri's `resources` config expects it:
+
+```bash
+cd backend
+.venv/Scripts/python.exe -m PyInstaller nyayasetu_backend.spec --noconfirm
+# copy backend/dist/nyayasetu_backend/ to app/src-tauri/backend-dist/
+cd ../app && npx tauri build --bundles msi   # NSIS cannot bundle a payload this size (D-037)
+```
+
+Verify with `msiexec /a <msi> /qn TARGETDIR=<a SHORT path>` (a long extraction
+path can itself trigger the MAX_PATH class of bug D-037 found and fixed -
+verify at a realistic path length, not your own long scratch directory).
+Delete `backend/build/`, `backend/dist/`, and `app/src-tauri/backend-dist/`
+after a successful build - each PyInstaller/Tauri build attempt leaves a
+multi-GB copy behind, and they accumulate fast across iterations.
+
 ### Verify the native Tauri window (not just the browser)
 
 Playwright drives browser contexts only - it cannot see into a native OS window.
